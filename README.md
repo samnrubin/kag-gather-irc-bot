@@ -1,4 +1,11 @@
-kag-gather-irc-bot
+#KAG Gather IRC Bot
 ==================
+### Configuration
+Edit ``config.json``.
 
-IRC Bot made with node.js
+### How to Install
+Before you install the bot, be shure to configure the bot.
+After you do that, just run ``npm install`` to install everything you'll need.
+
+### How to run the bot
+All you have to type is ``npm start``

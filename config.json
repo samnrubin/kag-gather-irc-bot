@@ -1,0 +1,36 @@
+{
+    "mysql": {
+        "host": "localhost",
+        "user": "root",
+        "password": "",
+        "database": "gather",
+        "matchTable": "matchTable",
+        "usersTable": "playersTable"
+    },
+    "bot": {
+        "channels": ["#kag.brasil"],
+        "userName": "GatherBot",
+        "realName": "nodeJS KAG Gather client",
+        "debug": false,
+        "showErrors": true,
+        "authname": "",
+        "password": "",
+        "version": "KAG Gather Bot v1.0.0"
+    },
+    "serverList": [{
+        "name": "",
+        "ip": "",
+        "publicIp": "",
+        "port": "",
+        "rcon": "",
+        "votes": 0
+    }],
+    "options": {
+        "adminList": [],
+        "playersNeeded": 2,
+        "playerSeclev": 9,
+        "saveLogs": true,
+        "checkFrequency": 5,
+        "saveErrorLogs": false
+    }
+}
