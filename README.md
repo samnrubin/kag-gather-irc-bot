@@ -1,5 +1,9 @@
 #KAG Gather IRC Bot
 ==================
+### Before anything
+Before anything, be shure that you have Node.js installed and MySQL.
+Node: http://nodejs.org/
+MySQL: http://www.mysql.com/
 ### Configuration
 Edit ``config.json``.
 
