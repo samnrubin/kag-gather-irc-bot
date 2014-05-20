@@ -803,6 +803,7 @@ function forceMatchEnd(from, to) {
                 });
                 bot.say(to, "Forced end on server " + playingServer + ", by " + from + ".");
                 playingServer = null;
+                isPlaying = false;
             }
         }
     });
