@@ -385,7 +385,7 @@ function add(from, to, message) {
                                     nick: WHOIS.nick,
                                     host: WHOIS.host,
                                 });
-                                bot.say(to, from + " has been added to the sub-list. There are " + subsArray.length + " players in the sub-list.");
+                                bot.say(to, from + " has  added to the sub-list [" + subsArray.length + "/" + playersNeeded + "]");
                             }
                         } else {
                             // adds to the playerlist
@@ -397,7 +397,7 @@ function add(from, to, message) {
                                         host: WHOIS.host,
                                         vote: vote
                                     });
-                                    bot.say(to, from + " has been added to the list. There are " + playersArray.length + " players in the list.");
+                                    bot.say(to, from + " added to the list [" + playersArray.length + "/" + playersNeeded + "]");
                                     return;
                                 } else {
                                     bot.say(to, from + ": '" + vote + "' is an unkown server name. Use !servers to get the server name you want.");
@@ -411,7 +411,7 @@ function add(from, to, message) {
                                     vote: null
                                 });
                             }
-                            bot.say(to, from + " has been added to the list. There are " + playersArray.length + " players in the list.");
+                            bot.say(to, from + " added to the list [" + playersArray.length + "/" + playersNeeded + "]");
                         }
                         if (playersArray.length === playersNeeded) {
                             //starts match
