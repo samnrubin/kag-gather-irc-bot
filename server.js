@@ -29,7 +29,7 @@ var version = config.bot.version;
 var saveLogs = config.options.saveLogs;
 var saveErrorLogs = config.options.saveErrorLogs;
 var checkFrequency = config.options.checkFrequency;
-var guideLink = config.options.guideURL ? " To know how to do that and learn the commands, read the guide at " + guideURL + " ." : "";
+var guideLink = config.options.guideURL ? " To know how to do that and learn the commands, read the guide at " + config.options.guideURL + " ." : "";
 if (saveLogs) {
     var date = new Date();
     var dia = date.getDate();
@@ -349,6 +349,20 @@ bot.addListener("registered", function() {
     if (logIn) {
         bot.send("AUTH", botAccount, botPassword);
     }
+});
+bot.addListener("part", function(a, b, c, raw) {
+    for (var i = 0; i < playersArray.length; i++) {
+        if (playersArray[i].host === raw.host) {
+            playersArray.splice(i, 1);
+            bot.say(channels, raw.nick + " was removed from the queue(left IRC).");
+        }
+    };
+    for (var i = 0; i < subsArray.length; i++) {
+        if (subsArray[i].host === raw.host) {
+            subsArray.splice(i, 1);
+            bot.say(channels, raw.nick + " was removed from the queue(left IRC).");
+        }
+    };
 });
 //IRC Functions
 function shufflePlayers(array) {
