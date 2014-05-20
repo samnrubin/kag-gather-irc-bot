@@ -411,7 +411,7 @@ function add(from, to, message) {
                                     vote: null
                                 });
                             }
-                            bot.say(to, from + " has been added to the list.");
+                            bot.say(to, from + " has been added to the list. There are " + playersArray.length + " players in the list.");
                         }
                         if (playersArray.length === playersNeeded) {
                             //starts match
