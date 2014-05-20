@@ -377,7 +377,7 @@ function add(from, to, message) {
                         var vote = msg[1];
                         //adds to the sublist if already playing
                         if (isPlaying) {
-                            if (playerIsPlaying) {
+                            if (playerIsPlaying(WHOIS.account)) {
                                 bot.say(to, from + ": you're already playing.");
                             } else {
                                 subsArray.push({
