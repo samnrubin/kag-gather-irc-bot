@@ -29,6 +29,7 @@ var version = config.bot.version;
 var saveLogs = config.options.saveLogs;
 var saveErrorLogs = config.options.saveErrorLogs;
 var checkFrequency = config.options.checkFrequency;
+var guideLink = config.options.guideURL ? " To know how to do that and learn the commands, read the guide at " + guideURL + " ." : "";
 if (saveLogs) {
     var date = new Date();
     var dia = date.getDate();
@@ -384,7 +385,7 @@ function add(from, to, message) {
                                     nick: WHOIS.nick,
                                     host: WHOIS.host,
                                 });
-                                bot.say(to, from + " has been added to the sub-list.");
+                                bot.say(to, from + " has been added to the sub-list. There are " + subsArray.length + " players in the sub-list.");
                             }
                         } else {
                             // adds to the playerlist
@@ -396,7 +397,7 @@ function add(from, to, message) {
                                         host: WHOIS.host,
                                         vote: vote
                                     });
-                                    bot.say(to, from + " has been added to the list.");
+                                    bot.say(to, from + " has been added to the list. There are " + playersArray.length + " players in the list.");
                                     return;
                                 } else {
                                     bot.say(to, from + ": '" + vote + "' is an unkown server name. Use !servers to get the server name you want.");
@@ -424,6 +425,9 @@ function add(from, to, message) {
                             var redTeam = playerList.splice(0, teamSize);
                             var server = getMostVotedServer();
                             playingServer = server;
+
+                            blueTeam = irc.colors.wrap("dark_blue", blueTeam);
+                            redTeam = irc.colors.wrap("light_red", redTeam);
                             bot.say(to, "Match started on server " + server + ": " + blueTeam + " VS " + redTeam);
                             startMatch(playerListCopy, blueTeam, redTeam, server);
                         }
@@ -518,13 +522,13 @@ function showList(from, to) {
         for (var i = 0; i < subsArray.length; i++) {
             list.push(subsArray[i].nick);
         };
-        bot.say(from, "Sub-list: " + list);
+        bot.say(from, "Sub-list(" + list.length + "): " + list);
     } else {
         var list = [];
         for (var i = 0; i < playersArray.length; i++) {
             list.push(playersArray[i].nick);
         };
-        bot.say(from, "List: " + list);
+        bot.say(from, "List(" + list.length + "): " + list);
     }
 }
 
@@ -564,7 +568,7 @@ function isBanned(from, to, message) {
 }
 
 function showHelp(from) {
-    bot.say(from, "The requeriments to play are: you must be linked and authed.To know how to do that and learn the commands, read the guide at [insert guide url here] .")
+    bot.say(from, "The requeriments to play are: you must be linked and authed. Here's a guide on how to auth: https://www.quakenet.org/help/q/how-to-register-an-account-with-q." + guideLink)
 }
 
 function showPlayerStats(from, to, message) {
@@ -608,7 +612,7 @@ function requestIRCLink(from, to, message) {
                         if (result[0]["COUNT(id)"] === 0) {
                             connection.query("INSERT INTO " + usersTable + " (name,stats,banExpires,authname) VALUES (?,?,?,?);", [username, "0,0", "null", account], function(err) {
                                 if (err) throw err;
-                                bot.say(from, from + ": Registered with success.");
+                                bot.say(from, from + ": Registered with success. You can now add to the queue on IRC using !add.");
                             });
                         } else {
                             bot.say(from, from + ": You are already registered.");
@@ -918,6 +922,15 @@ var serverCommands = [{
 }, {
     command: "LINK",
     fn: requestLink
+}, {
+    command: "round drawn",
+    fn: roundDrawn
+}, {
+    command: "Blue round won",
+    fn: roundBlue
+}, {
+    command: "Red round won",
+    fn: roundRed
 }];
 serversConfig.serversArray.forEach(function(srvconfig, i) {
     var sock = new Socket();
@@ -1159,7 +1172,7 @@ function requestLink(data, serverI) {
                 if (result[0]["COUNT(id)"] === 0) {
                     connection.query("INSERT INTO " + usersTable + " (name,stats,banExpires,authname) VALUES (?,?,?,?);", [username, "0,0", "null", authname], function(err) {
                         if (err) throw err;
-                        send(serverI, "/msg " + username + ": Registered with success.");
+                        send(serverI, "/msg " + username + ": Registered with success. You can now add to the queue on IRC using !add.");
                     });
                 } else {
                     send(serverI, "/msg " + username + ": You are already registered.");
@@ -1211,4 +1224,16 @@ function getMostVotedServer() {
             return i;
         }
     };
+}
+
+function roundDrawn(data, serverI) {
+    bot.say(channels, "Round finished on server " + serverI + ": it's a draw.");
+}
+
+function roundBlue(data, serverI) {
+    bot.say(channels, "Round finished on server " + serverI + ": the blue team has won.");
+}
+
+function roundRed(data, serverI) {
+    bot.say(channels, "Round finished on server " + serverI + ": the red team has won.");
 }
