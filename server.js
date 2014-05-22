@@ -974,22 +974,25 @@ serversConfig.serversArray.forEach(function(srvconfig, i) {
 });
 
 function parseData(data, serverI) {
-    data = data.substring(11, data.length);
-    console.log(data);
+    data = data.split("\n");
+    for (var j = 0; j < data.length; j++) {
+        data[j] = data[j].substring(11, data[j].length);
+        console.log(data[j]);
 
-    if (data.indexOf("[Gather] ") === 0) {
-        data = data.substring(9, data.length);
+        if (data[j].indexOf("[Gather] ") === 0) {
+            data[j] = data[j].substring(9, data[j].length);
 
-        for (var i = 0; i < serverCommands.length; i++) {
-            if (data.indexOf(serverCommands[i].command) === 0) {
-                data = data.split(" ");
+            for (var i = 0; i < serverCommands.length; i++) {
+                if (data[j].indexOf(serverCommands[i].command) === 0) {
+                    data[j] = data[j].split(" ");
 
-                var last = data.length - 1;
-                data[last] = data[last].substr(0, data[last].length - 1);
+                    var last = data[j].length - 1;
+                    data[j][last] = data[j][last].substr(0, data[j][last].length);
 
-                serverCommands[i].fn(data, serverI);
-            }
-        };
+                    serverCommands[i].fn(data[j], serverI);
+                }
+            };
+        }
     }
 }
 
