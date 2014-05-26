@@ -481,6 +481,11 @@ function removePlayerFromQueue(from, to) {
         var account = WHOIS.account;
         var removed = false;
         if (isPlaying) {
+            if (playerIsPlaying(WHOIS.account)) {
+                getPlayerByAuth(WHOIS.account,function(player){
+                    requestSub(["",player]);//to do: modify requestSub so it won't need a dummy array index when used from IRC
+                });
+            }
             for (var i = 0; i < subsArray.length; i++) {
                 if (subsArray[i].account === account) {
                     subsArray.splice(i, 1);
