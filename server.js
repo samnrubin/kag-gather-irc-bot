@@ -422,8 +422,8 @@ function add(from, to, message) {
                                     host: WHOIS.host,
                                     vote: null
                                 });
+                                bot.say(to, from + " added to the list [" + playersArray.length + "/" + playersNeeded + "]");
                             }
-                            bot.say(to, from + " added to the list [" + playersArray.length + "/" + playersNeeded + "]");
                         }
                         if (playersArray.length === playersNeeded) {
                             //starts match
@@ -440,7 +440,7 @@ function add(from, to, message) {
 
                             blueTeam = irc.colors.wrap("dark_blue", blueTeam);
                             redTeam = irc.colors.wrap("light_red", redTeam);
-                            bot.say(to, "Match started on server " + server + ": " + blueTeam + " VS " + redTeam);
+                            bot.say(to, "Match started on server " + serversConfig.serversArray[server].name + ": " + blueTeam + " VS " + redTeam);
                             startMatch(playerListCopy, blueTeam, redTeam, server);
                         }
                     }
@@ -802,6 +802,7 @@ function showBanList(from, to) {
 }
 
 function forceMatchEnd(from, to) {
+    send(playerSeclev, "/reloadseclevs");
     bot.whois(from, function(WHOIS) {
         if (WHOIS.account) {
             if (isAdmin(WHOIS.account)) {
