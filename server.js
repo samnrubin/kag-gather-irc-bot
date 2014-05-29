@@ -411,11 +411,9 @@ function add(from, to, message) {
                                         host: WHOIS.host,
                                         vote: vote
                                     });
-                                    bot.say(to, from + " added to the list [" + playersArray.length + "/" + playersNeeded + "]");
-                                    return;
+                                    bot.say(to, from + " added to the list [" + playersArray.length + "/" + playersNeeded + "] with vote " + vote);
                                 } else {
                                     bot.say(to, from + ": '" + vote + "' is an unkown server name. Use !servers to get the server name you want.");
-                                    return;
                                 }
                             } else {
                                 playersArray.push({
@@ -482,8 +480,8 @@ function removePlayerFromQueue(from, to) {
         var removed = false;
         if (isPlaying) {
             if (playerIsPlaying(WHOIS.account)) {
-                getPlayerByAuth(WHOIS.account,function(player){
-                    requestSub(["",player]);//to do: modify requestSub so it won't need a dummy array index when used from IRC
+                getPlayerByAuth(WHOIS.account, function(player) {
+                    requestSub(["", player]); //to do: modify requestSub so it won't need a dummy array index when used from IRC
                 });
             }
             for (var i = 0; i < subsArray.length; i++) {
