@@ -438,10 +438,16 @@ function add(from, to, message) {
                             var server = getMostVotedServer();
                             playingServer = server;
 
-                            blueTeam = irc.colors.wrap("dark_blue", blueTeam);
-                            redTeam = irc.colors.wrap("light_red", redTeam);
-                            bot.say(to, "Match started on server " + serversConfig.serversArray[server].name + ": " + blueTeam + " VS " + redTeam);
-                            startMatch(playerListCopy, blueTeam, redTeam, server);
+                            getPlayerListByAuth(blueTeam.concat(redTeam), function(players) {
+                                var blueTeamNames = players.splice(0, teamSize);
+                                var redTeamNames = players.splice(0, teamSize);
+
+                                blueTeam = irc.colors.wrap("dark_blue", blueTeam);
+                                redTeam = irc.colors.wrap("light_red", redTeam);
+
+                                bot.say(to, "Match started on server " + serversConfig.serversArray[server].name + ": " + blueTeamNames + " VS " + redTeamNames);
+                                startMatch(playerListCopy, blueTeam, redTeam, server);
+                            });
                         }
                     }
                 } else {
