@@ -399,7 +399,7 @@ function add(from, to, message) {
                                     nick: WHOIS.nick,
                                     host: WHOIS.host,
                                 });
-                                bot.say(to, from + " has  added to the sub-list [" + subsArray.length + "/" + playersNeeded + "]");
+                                bot.say(to, from + " has  added to the sub-list");
                             }
                         } else {
                             // adds to the playerlist
