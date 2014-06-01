@@ -1005,7 +1005,7 @@ function requestIRCLink(from, to, message) {
                 bot.say(to, from + ": " + result.message);
             });
         } else {
-            bot.say(to, from + ": You are not authed.").
+            bot.say(to, from + ": You are not authed.");
         }
     });
 }
