@@ -141,6 +141,7 @@ process.on("uncaughtException", function(err) {
     } else {
         console.log(err.stack);
     }
+    process.exit(1);
 });
 // IRC Parsing;
 var match = function(message, cmd) {
