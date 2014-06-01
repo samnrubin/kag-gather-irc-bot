@@ -8,14 +8,14 @@
         "usersTable": "playersTable"
     },
     "bot": {
-        "channels": ["#kag.brasil"],
+        "channels": ["#kag.gather"],
         "userName": "GatherBot",
         "realName": "nodeJS KAG Gather client",
         "debug": false,
         "showErrors": true,
         "authname": "",
         "password": "",
-        "version": "KAG Gather Bot v1.0.1"
+        "version": "KAG Gather Bot v1.1.0"
     },
     "serverList": [{
         "name": "",

@@ -22,8 +22,6 @@ var pool = mysql.createPool({
     database: config.mysql.database
 });
 
-var matchTable = config.mysql.matchTable,
-    usersTable = config.mysql.usersTable;
 //Other
 var version = config.bot.version;
 var saveLogs = config.options.saveLogs;
@@ -111,104 +109,22 @@ var playersArray = [
     vote: null
 }*/
 ];
-var links = {
-    IRCRequests: [],
-    KAGRequests: [],
-    addIRCRequest: function(authname, username) {
-        for (var i = 0; i < this.IRCRequests.length; i++) {
-            if (this.IRCRequests[i].account === authname) {
-                return;
-            }
-        };
-        this.IRCRequests.push({
-            account: authname,
-            username: username
-        });
-        var index = this.IRCRequests.length;
-        (function(IRCRequests) {
-            setTimeout(function() {
-                IRCRequests.splice(--index, 1);
-            }, 120000)
-        })(this.IRCRequests);
-    },
-    addKAGRequest: function(authname, username) {
-        for (var i = 0; i < this.KAGRequests.length; i++) {
-            if (this.KAGRequests[i].account === authname) {
-                return;
-            }
-        };
-        this.KAGRequests.push({
-            account: authname,
-            username: username
-        });
-        var index = this.KAGRequests.length;
-        (function(KAGRequests) {
-            setTimeout(function() {
-                KAGRequests.splice(--index, 1);
-            }, 120000)
-        })(this.KAGRequests);
-    },
-    validateIRCRequest: function(authname, username) {
-        this.addIRCRequest(authname, username);
-        for (var i = 0; i < this.KAGRequests.length; i++) {
-            if (this.KAGRequests[i].account === authname && this.KAGRequests[i].username === username) {
-                this.KAGRequests.splice(--i, 1);
-                return true;
-            }
-        };
-        return false;
-    },
-    validateKAGRequest: function(authname, username) {
-        this.addKAGRequest(authname, username);
-        for (var i = 0; i < this.IRCRequests.length; i++) {
-            if (this.IRCRequests[i].account === authname && this.IRCRequests[i].username === username) {
-                this.IRCRequests.splice(--i, 1);
-                return true;
-            }
-        };
-        return false;
-    }
-};
+
+var links = require("../lib/links.js")({
+    pool: pool,
+    usersTable: config.mysql.usersTable
+});
 var subsArray = [];
 var playingArray = [];
 var playingServer = null;
-var db = {
-    isPlayerBanned: function(authname, cb) {
-        pool.getConnection(function(err, connection) {
-            connection.query("SELECT banExpires FROM " + usersTable + " WHERE authname=? LIMIT 1;", [authname], function(err, player) {
-                if (typeof player[0] === "undefined") {
-                    cb("player-no-exists");
-                    return;
-                }
-                var actualDate = new Date();
-                var banDate = new Date(player[0].banExpires);
-                if (actualDate.getTime() > banDate.getTime()) {
-                    player[0].banExpires = "null";
-                    connection.query("UPDATE " + usersTable + " SET banExpires='null' WHERE authname=?", [authname], function(err) {
-                        if (err) throw err;
-                    });
-                }
-                if (player[0].banExpires == "null") {
-                    cb(false);
-                } else {
-                    cb(true, player[0].banExpires);
-                }
-            });
-        });
-    },
-    getPlayerStats: function(account, cb) {
-        pool.getConnection(function(err, connection) {
-            connection.query("SELECT stats FROM " + usersTable + " WHERE authname=? LIMIT 1;", [account], function(err, player) {
-                if (typeof player[0] === "undefined") {
-                    cb("player-no-exists");
-                    return;
-                }
-                cb(player[0].stats);
-            });
-        });
-    }
-}
+var db = require("../lib/db.js")({
+    pool: pool,
+    usersTable: config.mysql.usersTable,
+    matchTable: config.mysql.matchTable
+});
 //Error handling
+// exite process todo
+// 
 bot.addListener("error", function(err) {
     if (saveErrorLogs) {
         errorLogStream.write("[IRC-ERROR]\n" + err.stack + "\n============= END IRC ERROR =============\n");
@@ -438,7 +354,8 @@ function add(from, to, message) {
                             var server = getMostVotedServer();
                             playingServer = server;
 
-                            getPlayerListByAuth(blueTeam.concat(redTeam), function(players) {
+                            db.getPlayerListByAuth(blueTeam.concat(redTeam), function(players) {
+                                //todo: names are objects, get only .name
                                 var blueTeamNames = players.splice(0, teamSize);
                                 var redTeamNames = players.splice(0, teamSize);
 
@@ -461,7 +378,7 @@ function add(from, to, message) {
 }
 
 function startMatch(playerList, blueTeam, redTeam, serverI) {
-    getPlayerListByAuth(playerList, function(result) {
+    db.getPlayerListByAuth(playerList, function(result) {
         for (var i = 0; i < result.length; i++) {
             send(serverI, "/assignseclev " + result[i].name + " " + seclevID);
         };
@@ -486,7 +403,7 @@ function removePlayerFromQueue(from, to) {
         var removed = false;
         if (isPlaying) {
             if (playerIsPlaying(WHOIS.account)) {
-                getPlayerByAuth(WHOIS.account, function(player) {
+                db.getPlayerByAuth(WHOIS.account, function(player) {
                     requestSub(["", player]); //to do: modify requestSub so it won't need a dummy array index when used from IRC
                 });
             }
@@ -617,38 +534,6 @@ function sendMessageToServer(from, to, message) {
     if (!rightID) {
         bot.say(to, from + ": wrong server ID.");
     }
-}
-
-function requestIRCLink(from, to, message) {
-    var msg = message.split(" ");
-    var username = msg[1];
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            var account = WHOIS.account;
-            var validator = links.validateIRCRequest(account, username);
-
-            if (validator) {
-
-                pool.getConnection(function(err, connection) {
-                    if (err) throw err;
-                    connection.query("SELECT COUNT(id) FROM " + usersTable + " WHERE authname=?;", [account], function(err, result) {
-                        if (result[0]["COUNT(id)"] === 0) {
-                            connection.query("INSERT INTO " + usersTable + " (name,stats,banExpires,authname) VALUES (?,?,?,?);", [username, "0,0", "null", account], function(err) {
-                                if (err) throw err;
-                                bot.say(from, from + ": Registered with success. You can now add to the queue on IRC using !add.");
-                            });
-                        } else {
-                            bot.say(from, from + ": You are already registered.");
-                        }
-                    })
-                })
-            } else {
-                bot.say(from, from + ": Now go to a Gather Server and type !link <authname>");
-            }
-        } else {
-            bot.say(to, from + ": You must be authed to link.");
-        }
-    })
 }
 
 function forceRemove(from, to, message) {
@@ -812,13 +697,13 @@ function forceMatchEnd(from, to) {
     bot.whois(from, function(WHOIS) {
         if (WHOIS.account) {
             if (isAdmin(WHOIS.account)) {
-                getPlayerListByAuth(playingArray.blueTeam, function(result) {
+                db.getPlayerListByAuth(playingArray.blueTeam, function(result) {
                     for (var i = 0; i < result.length; i++) {
                         send(playingServer, "/kick " + result[i]);
                     };
                     playingArray.blueTeam = [];
                 });
-                getPlayerListByAuth(playingArray.redTeam, function(result) {
+                db.getPlayerListByAuth(playingArray.redTeam, function(result) {
                     for (var i = 0; i < result.length; i++) {
                         send(playingServer, "/kick " + result[i]);
                     };
@@ -839,7 +724,7 @@ function getUserAuthname(from, to, message) {
             if (isAdmin(WHOIS.account)) {
                 var msg = message.split(" ");
                 if (msg[1]) {
-                    getPlayerByAccount(msg[1], function(result) {
+                    db.getPlayerByAccount(msg[1], function(result) {
                         if (result === "player-no-exists") {
                             bot.say(from, "The player '" + msg[1] + "' isn't registered, or doesn't exists.");
                         } else {
@@ -858,7 +743,7 @@ function getUserUsername(from, to, message) {
             if (isAdmin(WHOIS.account)) {
                 var msg = message.split(" ");
                 if (msg[1]) {
-                    getPlayerByAuth(msg[1], function(result) {
+                    db.getPlayerByAuth(msg[1], function(result) {
                         if (result === "player-no-exists") {
                             bot.say(from, "The account '" + msg[1] + "' isn't registered, or doesn't exists.");
                         } else {
@@ -946,7 +831,7 @@ var serverCommands = [{
     fn: requestSub
 }, {
     command: "LINK",
-    fn: requestLink
+    fn: requestKAGLink
 }, {
     command: "round drawn",
     fn: roundDrawn
@@ -1019,80 +904,48 @@ function matchEnded(data, serverI, to) {
     if (data[0] === "Blue") {
         bot.say(channels, "Match ended on server " + serverI + ". The blue team has won.");
         for (var i = 0; i < playingArray.blueTeam.length; i++) {
-            getPlayerByAuth(playingArray.blueTeam[i], function(result) {
+            db.getPlayerByAuth(playingArray.blueTeam[i], function(result) {
                 send(serverI, "/kick " + result.name);
             });
-            addVictoryTo(playingArray.blueTeam[i]);
+            db.addVictoryTo(playingArray.blueTeam[i]);
         };
         for (var i = 0; i < playingArray.redTeam.length; i++) {
-            getPlayerByAuth(playingArray.redTeam[i], function(result) {
+            db.getPlayerByAuth(playingArray.redTeam[i], function(result) {
                 send(serverI, "/kick " + result.name);
             });
-            addLoseTo(playingArray.redTeam[i]);
+            db.addLoseTo(playingArray.redTeam[i]);
         };
         whoWon = 0;
     } else {
         bot.say(to, "Match ended on server " + serverI + ". The red team has won. You can now add to the list.");
         for (var i = 0; i < playingArray.blueTeam.length; i++) {
-            getPlayerByAuth(playingArray.blueTeam[i], function(result) {
+            db.getPlayerByAuth(playingArray.blueTeam[i], function(result) {
                 send(serverI, "/kick " + result.name);
             });
-            addLoseTo(playingArray.blueTeam[i]);
+            db.addLoseTo(playingArray.blueTeam[i]);
         };
         for (var i = 0; i < playingArray.redTeam.length; i++) {
-            getPlayerByAuth(playingArray.redTeam[i], function(result) {
+            db.getPlayerByAuth(playingArray.redTeam[i], function(result) {
                 send(serverI, "/kick " + result.name);
             });
-            addVictoryTo(playingArray.redTeam[i]);
+            db.addVictoryTo(playingArray.redTeam[i]);
         };
         whoWon = 1;
     }
-    addMatchToDB(playersArray.blueTeam, playersArray.redTeam, whoWon);
+    db.addMatchToDB(playersArray.blueTeam, playersArray.redTeam, whoWon);
     subsArray = [];
     playingArray = {};
 }
 
-function addVictoryTo(account) {
-    pool.getConnection(function(err, connection) {
-        if (err) throw err;
-        connection.query("SELECT stats FROM " + usersTable + " WHERE authname=? LIMIT 1;", [account], function(err, result) {
-            var stats = result[0].stats;
-            stats = stats.split(",");
-            stats[0] = (parseInt(stats[0]) + 1).toString();
-            stats = stats.join(",");
-            connection.query("UPDATE " + usersTable + " SET stats=? WHERE authname=?;", [stats, account], function(err) {
-                if (err) throw err;
-            });
-        });
-
-    });
-}
-
-function addLoseTo(account) {
-    pool.getConnection(function(err, connection) {
-        if (err) throw err;
-        connection.query("SELECT stats FROM " + usersTable + " WHERE authname=? LIMIT 1;", [account], function(err, result) {
-            var stats = result[0].stats;
-            stats = stats.split(",");
-            stats[1] = (parseInt(stats[1]) + 1).toString();
-            stats = stats.join(",");
-            connection.query("UPDATE " + usersTable + " SET stats=? WHERE authname=?;", [stats, account], function(err) {
-                if (err) throw err;
-            });
-        });
-
-    });
-}
-
 function sendTeams(data, serverI) {
-    getPlayerListByAuth(playingArray.blueTeam, function(result) {
+    db.getPlayerListByAuth(playingArray.blueTeam, function(result) {
         var list = [];
         for (var i = 0; i < result.length; i++) {
             list.push(result[i].name);
         };
         send(serverI, "/msg Blue team: " + list);
     });
-    getPlayerListByAuth(playingArray.redTeam, function(result) {
+    db.getPlayerListByAuth(playingArray.redTeam, function(result) {
         var list = [];
         for (var i = 0; i < result.length; i++) {
             list.push(result[i].name);
@@ -1101,52 +954,6 @@ function sendTeams(data, serverI) {
     });
 }
 
-function getPlayerByAuth(account, callback) {
-    pool.getConnection(function(err, connection) {
-        connection.query("SELECT name FROM " + usersTable + " WHERE authname=? LIMIT 1;", [account], function(err, result) {
-            if (err) throw err;
-            if (result[0]) {
-                callback(result[0]);
-            }
-        });
-    });
-}
-
-function getPlayerByAccount(name, callback) {
-    pool.getConnection(function(err, connection) {
-        connection.query("SELECT authname FROM " + usersTable + " WHERE name=? LIMIT 1;", [name], function(err, result) {
-            if (err) throw err;
-            if (result[0]) {
-                callback(result[0]);
-            } else {
-                callback("player-no-exists");
-            }
-        });
-    });
-}
-
-function getPlayerListByAuth(accounts, callback) {
-    pool.getConnection(function(err, connection) {
-        var sqlQuery = "";
-        for (var i = 0; i < accounts.length; i++) {
-            if (i === 0) {
-                sqlQuery = "SELECT name FROM " + usersTable + " WHERE authname='" + accounts[i] + "' ";
-            } else {
-                if (i === accounts.length - 1) {
-                    sqlQuery += "UNION SELECT name FROM " + usersTable + " WHERE authname='" + accounts[i] + "';";
-                } else {
-                    if (i !== 0 && i !== accounts.length - 1) {
-                        sqlQuery += "UNION SELECT name FROM " + usersTable + " WHERE authname='" + accounts[i] + "' ";
-                    }
-                }
-            }
-        };
-        connection.query(sqlQuery, function(err, result) {
-            if (err) throw err;
-            callback(result);
-        });
-    });
-}
 
 function sayToChannel(data) {
     data.shift();
@@ -1160,12 +967,12 @@ function requestSub(data, serverI) {
     var subbed = data[1];
     send(serverI, "/kick " + subbed);
     if (subsArray[0]) {
-        getPlayerByAuth(subsArray[0].account, function(result) {
+        db.getPlayerByAuth(subsArray[0].account, function(result) {
             send(serverI, "/assignseclev " + result.name + " " + seclevID);
         });
         bot.say(subsArray[0].nick, "You are now playing for gather in place of " + subbed + ". The server's IP:Port : " + serversConfig.serversArray[serverI].publicIp + ":" + serversConfig.serversArray[serverI].port);
 
-        getPlayerByAccount(subbed, function(result) {
+        db.getPlayerByAccount(subbed, function(result) {
             var team = "";
             for (var i = 0; i < playersArray.blueTeam.length; i++) {
                 if (playersArray.blueTeam[i].account === result.authname) {
@@ -1189,36 +996,26 @@ function requestSub(data, serverI) {
     }
 }
 
-function requestLink(data, serverI) {
-    var authname = data[1];
-    var username = data[2];
-    var validator = links.validateKAGRequest(authname, username);
-    if (validator) {
-        pool.getConnection(function(err, connection) {
-            if (err) throw err;
-            connection.query("SELECT COUNT(id) FROM " + usersTable + " WHERE name=?;", [username], function(err, result) {
-                if (result[0]["COUNT(id)"] === 0) {
-                    connection.query("INSERT INTO " + usersTable + " (name,stats,banExpires,authname) VALUES (?,?,?,?);", [username, "0,0", "null", authname], function(err) {
-                        if (err) throw err;
-                        send(serverI, "/msg " + username + ": Registered with success. You can now add to the queue on IRC using !add.");
-                    });
-                } else {
-                    send(serverI, "/msg " + username + ": You are already registered.");
-                }
-            })
-        })
-    } else {
-        send(serverI, "/msg " + username + ": Now go to the IRC channel and type !link <kagusername> <authname>");
-    }
+function requestIRCLink(from, to, message) {
+    var msg = message.split(" ");
+    var username = msg[1];
+    bot.whois(from, function(WHOIS) {
+        if (WHOIS.account) {
+            links.requestIRCLink(WHOIS.account, username, function(result) {
+                bot.say(to, from + ": " + result.message);
+            });
+        } else {
+            bot.say(to, from + ": You are not authed.").
+        }
+    });
 }
 
-function addMatchToDB(blueTeam, redTeam, whoWon) {
-    pool.getConnection(function(err, connection) {
-        connection.query("INSERT INTO " + matchTable + " (blueTeam,redTeam,winner) VALUES(?,?,?);", [blueTeam.join(","), redTeam.join(","), whoWon], function(err, result) {
-            if (err) throw err;
-            connection.release();
-        });
-    });
+function requestKAGLink(data, serverI) {
+    var authname = data[1];
+    var username = data[2];
+    links.requestLink(authname, username, function(result) {
+        send(serverI, username + ": " + result.message);
+    })
 }
 
 function send(serverID, text) {
