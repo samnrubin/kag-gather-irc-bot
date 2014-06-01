@@ -65,10 +65,12 @@ var seclevID = config.options.playerSeclev;
 //Objects
 var serversConfig = {
     serversArray: config.serverList,
-    votesArray: [{
+    votesArray: [
+        /*{
         account: "LickTT",
         vote: "USA"
-    }],
+    }*/
+    ],
     addVoteTo: function(name) {
         for (var i = 0; i < this.serversArray.length; i++) {
             if (this.serversArray[i].name === name) {
@@ -110,14 +112,14 @@ var playersArray = [
 }*/
 ];
 
-var links = require("../lib/links.js")({
+var links = require("./lib/links.js")({
     pool: pool,
     usersTable: config.mysql.usersTable
 });
 var subsArray = [];
 var playingArray = [];
 var playingServer = null;
-var db = require("../lib/db.js")({
+var db = require("./lib/db.js")({
     pool: pool,
     usersTable: config.mysql.usersTable,
     matchTable: config.mysql.matchTable
@@ -223,11 +225,11 @@ var commands = [{
 }, {
     command: "!username",
     fn: getUserUsername,
-    adminOnly: true
+    adminOnly: false
 }, {
     command: "!authname",
     fn: getUserAuthname,
-    adminOnly: true
+    adminOnly: false
 }, {
     command: "!version",
     fn: showVersion,
@@ -320,6 +322,8 @@ function add(from, to, message) {
                         } else {
                             // adds to the playerlist
                             if (vote) {
+                                //case insensitive
+                                vote = vote.toUpperCase();
                                 if (isValidVote(vote)) {
                                     playersArray.push({
                                         account: WHOIS.account,
