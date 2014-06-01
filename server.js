@@ -808,7 +808,7 @@ function showBanList(from, to) {
 }
 
 function forceMatchEnd(from, to) {
-    send(playerSeclev, "/reloadseclevs");
+    send("/reloadseclevs");
     bot.whois(from, function(WHOIS) {
         if (WHOIS.account) {
             if (isAdmin(WHOIS.account)) {
