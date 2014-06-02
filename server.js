@@ -1,4 +1,5 @@
 var irc = require("irc");
+var colors = require('irc-colors');
 var mysql = require("mysql");
 var fs = require("fs");
 var Socket = require('net').Socket;
@@ -349,26 +350,30 @@ function add(from, to, message) {
                         if (playersArray.length === playersNeeded) {
                             //starts match
                             var playerList = [];
-                            for (var i = 0; i < playersArray.length; i++) {
-                                playerList.push(playersArray[i].account);
-                            };
-                            shufflePlayers(playerList);
-                            var playerListCopy = playerList.slice();
-                            var blueTeam = playerList.splice(0, teamSize);
-                            var redTeam = playerList.splice(0, teamSize);
-                            var server = getMostVotedServer();
-                            playingServer = server;
+                            var playersArrayCopy = playersArray.slice();
+                            console.log("PLAYERASRARY| ", playersArrayCopy);
+                            playersArrayCopy = playersArrayCopy.map(function(x) {
+                                return x.account;
+                            });
+                            console.log('PLAHYERARRA DEPOIS', playersArrayCopy)
+                            shufflePlayers(playersArrayCopy);
+                            playingServer = getMostVotedServer();
 
-                            db.getPlayerListByAuth(blueTeam.concat(redTeam), function(players) {
-                                //todo: names are objects, get only .name
-                                var blueTeamNames = players.splice(0, teamSize);
-                                var redTeamNames = players.splice(0, teamSize);
 
-                                blueTeam = irc.colors.wrap("dark_blue", blueTeam);
-                                redTeam = irc.colors.wrap("light_red", redTeam);
+                            db.getPlayerListByAuth(playersArrayCopy, function(players) {
+                                players = players.map(function(x) {
+                                    return x.name;
+                                })
+                                console.log(playersArrayCopy, "\n", players)
+                                var blueTeam = players.splice(0, teamSize);
+                                var redTeam = players.splice(0, teamSize);
 
-                                bot.say(to, "Match started on server " + serversConfig.serversArray[server].name + ": " + blueTeamNames + " VS " + redTeamNames);
-                                startMatch(playerListCopy, blueTeam, redTeam, server);
+                                var blueTeamNames = /*colors.blue*/ (blueTeam.join(','));
+                                var redTeamNames = /*colors.red*/ (redTeam.join(','));
+                                console.log("NAMES", blueTeamNames, redTeamNames)
+                                bot.say(to, "Match started on server " + serversConfig.serversArray[playingServer].name + ": " + blueTeamNames + " VS " + redTeamNames);
+                                console.log(to, " | TO")
+                                startMatch(playersArrayCopy, blueTeam, redTeam, playingServer);
                             });
                         }
                     }
