@@ -351,11 +351,9 @@ function add(from, to, message) {
                             //starts match
                             var playerList = [];
                             var playersArrayCopy = playersArray.slice();
-                            console.log("PLAYERASRARY| ", playersArrayCopy);
                             playersArrayCopy = playersArrayCopy.map(function(x) {
                                 return x.account;
                             });
-                            console.log('PLAHYERARRA DEPOIS', playersArrayCopy)
                             shufflePlayers(playersArrayCopy);
                             playingServer = getMostVotedServer();
 
@@ -363,16 +361,13 @@ function add(from, to, message) {
                             db.getPlayerListByAuth(playersArrayCopy, function(players) {
                                 players = players.map(function(x) {
                                     return x.name;
-                                })
-                                console.log(playersArrayCopy, "\n", players)
+                                });
                                 var blueTeam = players.splice(0, teamSize);
                                 var redTeam = players.splice(0, teamSize);
 
                                 var blueTeamNames = /*colors.blue*/ (blueTeam.join(','));
                                 var redTeamNames = /*colors.red*/ (redTeam.join(','));
-                                console.log("NAMES", blueTeamNames, redTeamNames)
                                 bot.say(to, "Match started on server " + serversConfig.serversArray[playingServer].name + ": " + blueTeamNames + " VS " + redTeamNames);
-                                console.log(to, " | TO")
                                 startMatch(playersArrayCopy, blueTeam, redTeam, playingServer);
                             });
                         }
