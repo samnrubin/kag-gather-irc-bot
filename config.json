@@ -31,7 +31,7 @@
         "playerSeclev": 9,
         "saveLogs": true,
         "checkFrequency": 5,
-        "saveErrorLogs": false,
+        "saveErrorLogs": true,
         "guideURL": "[insert guide link here]"
     }
 }

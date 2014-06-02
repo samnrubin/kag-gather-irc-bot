@@ -15,7 +15,6 @@ var botAccount = config.bot.authname;
 var botPassword = config.bot.password;
 var logIn = (botAccount && botPassword);
 //MySQL Config
-var mysql = require('mysql');
 var pool = mysql.createPool({
     host: config.mysql.host,
     user: config.mysql.user,
@@ -24,7 +23,7 @@ var pool = mysql.createPool({
 });
 
 //Other
-var version = config.bot.version;
+var version = "KAG Gather Bot v1.1.0";
 var saveLogs = config.options.saveLogs;
 var saveErrorLogs = config.options.saveErrorLogs;
 var checkFrequency = config.options.checkFrequency;
@@ -64,81 +63,31 @@ var isPlaying = false;
 var isBotOn = true;
 var seclevID = config.options.playerSeclev;
 //Objects
-var serversConfig = {
-    serversArray: config.serverList,
-    votesArray: [
-        /*{
-        account: "LickTT",
-        vote: "USA"
-    }*/
-    ],
-    addVoteTo: function(name) {
-        for (var i = 0; i < this.serversArray.length; i++) {
-            if (this.serversArray[i].name === name) {
-                this.serversArray[i].votes += 1;
-            }
-        };
-    },
-    getMostVotedServer: function() {
-        var mostVoted = [0, ""];
-        for (var i = 0; i < this.serversArray.length; i++) {
-            if (this.serversArray[i].votes > mostVoted[0]) {
-                mostVoted = [this.serversArray[i].votes, this.serversArray[i].name];
-            }
-        };
-        return mostVoted;
-    },
-    playerAlreadyVoted: function(account) {
-        var voted = false;
-        for (var i = 0; i < this.votesArray.length; i++) {
-            if (this.votesArray[i].account == account) {
-                voted = true;
-            }
-        };
-        return voted;
-    },
-    resetVoting: function() {
-        for (var i = 0; i < this.serversArray.length; i++) {
-            this.serversArray.votes = 0;
-        };
-        votesArray = [];
-    }
-}
-var playersArray = [
-    /*{
-    account: "LickTT",
-    nick: "LucasTT",
-    host: "127.0.0.1",
-    vote: null
-}*/
-];
-
+var serversArray = config.serverList;
+var playersArray = [];
 var links = require("./lib/links.js")({
     pool: pool,
     usersTable: config.mysql.usersTable
 });
-var subsArray = [];
-var playingArray = [];
-var playingServer = null;
 var db = require("./lib/db.js")({
     pool: pool,
     usersTable: config.mysql.usersTable,
     matchTable: config.mysql.matchTable
 });
-//Error handling
-// exite process todo
-// 
+var subsArray = [];
+var playingArray = [];
+var playingServer = null;
+//Error handling - logs/saves and exit process(1)
 bot.addListener("error", function(err) {
     if (saveErrorLogs) {
-        errorLogStream.write("[IRC-ERROR]\n" + err.stack + "\n============= END IRC ERROR =============\n");
+        errorLogStream.write("[IRC-ERROR]\n" + JSON.stringify(err) + "\n============= END IRC ERROR =============\n");
     } else {
         console.log(err.stack);
     }
 });
-
 process.on("uncaughtException", function(err) {
     if (saveErrorLogs) {
-        errorLogStream.write("[PROCESS-ERROR]\n" + err.stack + "\n=========== END PROCESS ERROR ===========\n");
+        errorLogStream.write("[PROCESS-ERROR]\n" + JSON.stringify(err) + "\n=========== END PROCESS ERROR ===========\n");
     } else {
         console.log(err.stack);
     }
@@ -151,99 +100,153 @@ var match = function(message, cmd) {
 var commands = [{
     command: "!add",
     fn: add,
-    adminOnly: false
+    adminOnly: false,
+    description: "Add yourself to the gather queue so you can play, if there's already a match running, you get added to the sub-list.",
+    usage: "!add <optional:servername>"
 }, {
     command: "!rem",
     fn: removePlayerFromQueue,
-    adminOnly: false
+    adminOnly: false,
+    description: "Remove yourself from the gather queue or the sub-list.",
+    usage: "!rem"
 }, {
     command: "!list",
     fn: showList,
-    adminOnly: false
+    adminOnly: false,
+    description: "Shows the list of players in the actual queue or sub-list.",
+    usage: "!list"
 }, {
     command: "!status",
     fn: status,
-    adminOnly: false
+    adminOnly: false,
+    description: "Shows the bot status",
+    usage: "!status"
 }, {
     command: "!isbanned",
     fn: isBanned,
-    adminOnly: false
+    adminOnly: false,
+    description: "Shows if a player is banned, if the player is, shows when the ban will expire.",
+    usage: "!isbanned <authname>"
 }, {
     command: "!help",
     fn: showHelp,
-    adminOnly: false
+    adminOnly: false,
+    description: "Shows basic help.",
+    usage: "!help"
 }, {
     command: "!stats",
     fn: showPlayerStats,
-    adminOnly: false
+    adminOnly: false,
+    description: "Shows a player's stats(wins/losses)",
+    usage: "!stats <authname>"
 }, {
     command: "!say",
     fn: sendMessageToServer,
-    adminOnly: false
+    adminOnly: false,
+    description: "Sends a message to a Gather KAG Server",
+    usage: "!say <serverName> <message>"
 }, {
     command: "!link",
     fn: requestIRCLink,
-    adminOnly: false
+    adminOnly: false,
+    description: "Requests a link. This is required to play.",
+    usage: "!link <kagusername>"
 }, {
     command: "!frem",
     fn: forceRemove,
-    adminOnly: true
+    adminOnly: true,
+    description: "Admin only. Removes a player from the queue.",
+    usage: "!frem <authname>"
 }, {
     command: "!stop",
     fn: stopBot,
-    adminOnly: true
+    adminOnly: true,
+    description: "Stops the bot and clean queues.",
+    usage: "!stop"
 }, {
     command: "!pause",
     fn: pauseBot,
-    adminOnly: true
+    adminOnly: true,
+    description: "Pauses the bot, queues are not cleaned.",
+    usage: "!pause"
 }, {
     command: "!resume",
     fn: resumeBot,
-    adminOnly: true
+    adminOnly: true,
+    description: "Resumes the bot if was previously paused or stopped.",
+    usage: "!resume"
 }, {
     command: "!ban",
     fn: banPlayerByAccount,
-    adminOnly: true
+    adminOnly: true,
+    description: "Admin only. Bans a player.",
+    usage: "!ban <authname>"
 }, {
     command: "!unban",
     fn: unbanPlayerByAccount,
-    adminOnly: true
+    adminOnly: true,
+    description: "Admin only. Unbans a player.",
+    usage: "!unban <authname>"
 }, {
     command: "!execute",
     fn: executeCommand,
-    adminOnly: true
+    adminOnly: true,
+    description: "Admin only. Use with caution. Executes a command in the server.",
+    usage: "!execute <command>"
 }, {
     command: "!clear",
     fn: clearQueues,
-    adminOnly: true
+    adminOnly: true,
+    description: "Admin only. Clear queues, sub and list.",
+    usage: "!clear"
 }, {
     command: "!banlist",
     fn: showBanList,
-    adminOnly: true
+    adminOnly: true,
+    description: "Admin only. Shows the ban-list.",
+    usage: "!banlist"
 }, {
     command: "!force_match_end",
     fn: forceMatchEnd,
-    adminOnly: true
+    adminOnly: true,
+    description: "Admin only. Use with caution. Forces the match end, no stats are counted.",
+    usage: "!force_match_end"
 }, {
     command: "!username",
     fn: getUserUsername,
-    adminOnly: false
+    adminOnly: false,
+    description: "Shows the user's KAG username.",
+    usage: "!username <authname>"
 }, {
     command: "!authname",
     fn: getUserAuthname,
-    adminOnly: false
+    adminOnly: false,
+    description: "Shows the user's IRC authname.",
+    usage: "!authname <kagusername>"
 }, {
     command: "!version",
     fn: showVersion,
-    adminOnly: true
+    adminOnly: true,
+    description: "Shows the bot's version.",
+    usage: "!version"
 }, {
     command: "!givewin",
     fn: giveWin,
-    adminOnly: true
+    adminOnly: true,
+    description: "Admin only. Use with caution. Force ends a match counting stats.",
+    usage: "!givewin <teamname>"
 }, {
     command: "!server",
     fn: showServerList,
-    adminOnly: false
+    adminOnly: false,
+    description: "Shows the available server names.",
+    usage: "!server"
+}, {
+    command: "!whatis",
+    fn: commandSpecificHelp,
+    adminOnly: false,
+    description: "What are you doing?",
+    usage: "You know how."
 }];
 
 //IRC Handling
@@ -251,19 +254,23 @@ bot.addListener("message#", function(from, to, message) {
     if (saveLogs) {
         logStream.write("[" + (new Date().toJSON()) + "][" + to + "]<" + from + ">" + message + "\n");
     }
-    if (isBotOn) {
+    bot.whois(from, function(WHOIS) {
+        var isPlayerAdmin = isAdmin(WHOIS.account);
+        var canExecute = isPlayerAdmin || isBotOn;
         for (var i = 0; i < commands.length; i++) {
-            if (match(message, commands[i].command)) {
-                if (isBotOn) {
-                    commands[i].fn(from, to, message);
-                } else {
+            if (canExecute) {
+                if (match(message, commands[i].command)) {
                     if (commands[i].adminOnly) {
+                        if (isPlayerAdmin) {
+                            commands[i].fn(from, to, message);
+                        }
+                    } else {
                         commands[i].fn(from, to, message);
                     }
                 }
             }
         };
-    }
+    })
 });
 bot.addListener("registered", function() {
     if (logIn) {
@@ -367,7 +374,7 @@ function add(from, to, message) {
 
                                 var blueTeamNames = /*colors.blue*/ (blueTeam.join(','));
                                 var redTeamNames = /*colors.red*/ (redTeam.join(','));
-                                bot.say(to, "Match started on server " + serversConfig.serversArray[playingServer].name + ": " + blueTeamNames + " VS " + redTeamNames);
+                                bot.say(to, "Match started on server " + serversArray[playingServer].name + ": " + blueTeamNames + " VS " + redTeamNames);
                                 startMatch(playersArrayCopy, blueTeam, redTeam, playingServer);
                             });
                         }
@@ -489,9 +496,9 @@ function isAdmin(account) {
 function status(from, to, message) {
     var botStatus = isBotOn ? "on" : "off";
     if (isPlaying) {
-        bot.say(to, "There is a match happening. You can add to the sub-list. And the bot is " + botStatus + ".");
+        bot.say(to, "There is a match happening. And the bot is " + botStatus + ".");
     } else {
-        bot.say(to, "There isn't a match happening. You can add to the list. And the bot is " + botStatus + ".");
+        bot.say(to, "There isn't a match happening. And the bot is " + botStatus + ".");
     }
 }
 
@@ -542,256 +549,171 @@ function sendMessageToServer(from, to, message) {
 }
 
 function forceRemove(from, to, message) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                var msg = message.split(" ");
-                if (msg[1]) {
-                    var authname = msg[1];
-                    for (var i = 0; i < playersArray.length; i++) {
-                        if (playersArray[i].account === authname) {
-                            playersArray.splice(i, 1);
-                            return;
-                        }
-                    };
-                    for (var i = 0; i < subsArray.length; i++) {
-                        if (subsArray[i].account === authname) {
-                            subsArray.splice(i, 1);
-                            return;
-                        }
-                    };
-                }
+    var msg = message.split(" ");
+    if (msg[1]) {
+        var authname = msg[1];
+        for (var i = 0; i < playersArray.length; i++) {
+            if (playersArray[i].account === authname) {
+                playersArray.splice(i, 1);
+                return;
             }
-        }
-    });
+        };
+        for (var i = 0; i < subsArray.length; i++) {
+            if (subsArray[i].account === authname) {
+                subsArray.splice(i, 1);
+                return;
+            }
+        };
+    }
 }
 
 function stopBot(from, to) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                isBotOn = false;
-                playersArray = [];
-            }
-        }
-    });
+    isBotOn = false;
+    playersArray = [];
 }
 
 function pauseBot(from, to) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                isBotOn = false;
-            }
-        }
-    });
+    isBotOn = false;
 }
 
 function resumeBot(from, to) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                isBotOn = true;
-            }
-        }
-    });
+    isBotOn = true;
 }
 
 function banPlayerByAccount(from, to, message) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                var msg = message.split(" ");
-                if (msg[1]) {
-                    var account = msg[1];
-                } else {
-                    return;
-                }
-                if (msg[2]) {
-                    var time = msg[2];
-                } else {
-                    return;
-                }
-                pool.getConnection(function(err, connection) {
-                    var actualDate = new Date();
+    var msg = message.split(" ");
+    if (msg[1]) {
+        var account = msg[1];
+    } else {
+        return;
+    }
+    if (msg[2]) {
+        var time = msg[2];
+    } else {
+        return;
+    }
+    pool.getConnection(function(err, connection) {
+        var actualDate = new Date();
 
-                    actualDate.setDate(actualDate.getDate() + parseInt(time));
-                    actualDate = actualDate.toString();
-                    connection.query("UPDATE " + usersTable + " SET banExpires=? WHERE authname=?", [actualDate, account], function(err) {
-                        if (err) throw err;
-                        bot.say(to, account + " is now banned for " + time + " days.");
-                    });
-                });
-            }
-        }
+        actualDate.setDate(actualDate.getDate() + parseInt(time));
+        actualDate = actualDate.toString();
+        connection.query("UPDATE " + usersTable + " SET banExpires=? WHERE authname=?", [actualDate, account], function(err) {
+            if (err) throw err;
+            bot.say(to, account + " is now banned for " + time + " days.");
+        });
     });
 };
 
 function unbanPlayerByAccount(from, to, message) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                var msg = message.split(" ");
-                if (msg[1]) {
-                    var account = msg[1];
-                } else {
-                    return;
-                }
-                pool.getConnection(function(err, connection) {
-                    connection.query("UPDATE " + usersTable + " SET banExpires='null' WHERE authname=?", [account], function(err) {
-                        if (err) throw err;
-                        bot.say(to, account + " is now unbanned.");
-                    });
-                });
-            }
-        }
+    var msg = message.split(" ");
+    if (msg[1]) {
+        var account = msg[1];
+    } else {
+        return;
+    }
+    pool.getConnection(function(err, connection) {
+        connection.query("UPDATE " + usersTable + " SET banExpires='null' WHERE authname=?", [account], function(err) {
+            if (err) throw err;
+            bot.say(to, account + " is now unbanned.");
+        });
     });
 };
 
 function executeCommand(from, to, message) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                var msg = message.split(" ");
-                msg.shift();
-                if (!msg[0]) {
-                    return;
-                }
-                var serverI = msg[0];
-                msg.shift();
-                msg = msg.join(" ");
-                send(serverI, msg);
-                bot.say(from, "Ran '" + msg + "' on server " + serverI + ".");
-            }
-        }
-    });
+    var msg = message.split(" ");
+    msg.shift();
+    if (!msg[0]) {
+        return;
+    }
+    var serverI = msg[0];
+    msg.shift();
+    msg = msg.join(" ");
+    send(serverI, msg);
+    bot.say(from, "Ran '" + msg + "' on server " + serverI + ".");
 }
 
 function clearQueues(from, to) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                playersArray = [];
-                subsArray = [];
-                bot.say(to, "Queues cleaned by " + from + ".");
-            }
-        }
-    });
+    playersArray = [];
+    subsArray = [];
+    bot.say(to, "Queues cleaned by " + from + ".");
 }
 
 function showBanList(from, to) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                pool.getConnection(function(err, connection) {
-                    connection.query("SELECT authname FROM " + usersTable + " WHERE banExpires!='null';", function(err, results) {
-                        var banList = [];
-                        for (var i = 0; i < results.length; i++) {
-                            banList.push(results[i].authname);
-                        };
-                        bot.say(from, "Ban list:" + banList);
-                    });
-                })
-            }
-        }
-    });
+    pool.getConnection(function(err, connection) {
+        connection.query("SELECT authname FROM " + usersTable + " WHERE banExpires!='null';", function(err, results) {
+            var banList = [];
+            for (var i = 0; i < results.length; i++) {
+                banList.push(results[i].authname);
+            };
+            bot.say(from, "Ban list:" + banList);
+        });
+    })
 }
 
 function forceMatchEnd(from, to) {
-    send("/reloadseclevs");
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                db.getPlayerListByAuth(playingArray.blueTeam, function(result) {
-                    for (var i = 0; i < result.length; i++) {
-                        send(playingServer, "/kick " + result[i]);
-                    };
-                    playingArray.blueTeam = [];
-                });
-                db.getPlayerListByAuth(playingArray.redTeam, function(result) {
-                    for (var i = 0; i < result.length; i++) {
-                        send(playingServer, "/kick " + result[i]);
-                    };
-                    playingArray.blueTeam = [];
-                    subsArray = [];
-                });
-                bot.say(to, "Forced end on server " + playingServer + ", by " + from + ".");
-                playingServer = null;
-                isPlaying = false;
-            }
-        }
+    db.getPlayerListByAuth(playingArray.blueTeam, function(result) {
+        for (var i = 0; i < result.length; i++) {
+            send(playingServer, "/kick " + result[i]);
+        };
+        playingArray.blueTeam = [];
     });
+    db.getPlayerListByAuth(playingArray.redTeam, function(result) {
+        for (var i = 0; i < result.length; i++) {
+            send(playingServer, "/kick " + result[i]);
+        };
+        playingArray.blueTeam = [];
+        subsArray = [];
+    });
+    bot.say(to, "Forced end on server " + playingServer + ", by " + from + ".");
+    playingServer = null;
+    isPlaying = false;
 }
 
 function getUserAuthname(from, to, message) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                var msg = message.split(" ");
-                if (msg[1]) {
-                    db.getPlayerByAccount(msg[1], function(result) {
-                        if (result === "player-no-exists") {
-                            bot.say(from, "The player '" + msg[1] + "' isn't registered, or doesn't exists.");
-                        } else {
-                            bot.say(from, msg[1] + "'s authname is: " + result.authname);
-                        }
-                    });
-                }
+    var msg = message.split(" ");
+    if (msg[1]) {
+        db.getPlayerByAccount(msg[1], function(result) {
+            if (result === "player-no-exists") {
+                bot.say(from, "The player '" + msg[1] + "' isn't registered, or doesn't exists.");
+            } else {
+                bot.say(from, msg[1] + "'s authname is: " + result.authname);
             }
-        }
-    });
+        });
+    }
 };
 
 function getUserUsername(from, to, message) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                var msg = message.split(" ");
-                if (msg[1]) {
-                    db.getPlayerByAuth(msg[1], function(result) {
-                        if (result === "player-no-exists") {
-                            bot.say(from, "The account '" + msg[1] + "' isn't registered, or doesn't exists.");
-                        } else {
-                            bot.say(from, msg[1] + "'s KAG username is: " + result.name);
-                        }
-                    });
-                }
+    var msg = message.split(" ");
+    if (msg[1]) {
+        db.getPlayerByAuth(msg[1], function(result) {
+            if (result === "player-no-exists") {
+                bot.say(from, "The account '" + msg[1] + "' isn't registered, or doesn't exists.");
+            } else {
+                bot.say(from, msg[1] + "'s KAG username is: " + result.name);
             }
-        }
-    });
+        });
+    }
 }
 
 function showVersion(from) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                bot.say(from, "Bot's version: " + version);
-            }
-        }
-    });
+    bot.say(from, "Bot's version: " + version);
 }
 
 function giveWin(from, to, message) {
-    bot.whois(from, function(WHOIS) {
-        if (WHOIS.account) {
-            if (isAdmin(WHOIS.account)) {
-                var msg = message.split(" ");
-                if (msg[1]) {
-                    if (msg[2]) {
-                        if (msg[1] === "blue") {
-                            matchEnded(["Blue"], msg[2], to)
-                            return;
-                        }
-                        if (msg[1] === "red") {
-                            matchEnded(["Red"], msg[2], to)
-                            return;
-                        }
-                    }
-                }
-                bot.say(from, "Invalid input for !givewin.");
+    var msg = message.split(" ");
+    if (msg[1]) {
+        if (msg[2]) {
+            if (msg[1] === "blue") {
+                matchEnded(["Blue"], msg[2], to)
+                return;
+            }
+            if (msg[1] === "red") {
+                matchEnded(["Red"], msg[2], to)
+                return;
             }
         }
-    });
+    }
+    bot.say(from, "Invalid input for !givewin.");
 }
 
 function showServerList(from) {
@@ -809,6 +731,32 @@ function isValidVote(serverName) {
         }
     };
     return false;
+}
+
+function commandSpecificHelp(from, to, message) {
+    var commandName = message.split(" ")[1]
+    var command = isValidCommand(commandName);
+    if (command.isValid) {
+        var i = command.ID;
+        bot.say(from, "Description: " + commands[i].description + "\nUsage: " + commands[i].usage);
+    } else {
+        bot.say(from, "Uknown '" + command + "' command.")
+    }
+}
+
+function isValidCommand(command) {
+    for (var i = 0; i < commands.length; i++) {
+        if (commands[i].command === command) {
+            return {
+                isValid: true,
+                ID: i
+            };
+        }
+    };
+    return {
+        isValid: false,
+        commandID: null
+    };
 }
 //Server Functions
 var socketArray = [];
@@ -847,7 +795,7 @@ var serverCommands = [{
     command: "Red round won",
     fn: roundRed
 }];
-serversConfig.serversArray.forEach(function(srvconfig, i) {
+serversArray.forEach(function(srvconfig, i) {
     var sock = new Socket();
     sock.setEncoding("utf8");
     sock.setNoDelay();
@@ -858,17 +806,17 @@ serversConfig.serversArray.forEach(function(srvconfig, i) {
 
     sock.on("connect", function() {
         this.write(srvconfig.rcon + "\n", "utf8");
-        console.log("CONNECTED TO THE SERVER...");
+        console.log("Connected to the KAG Server...");
     });
     sock.on("data", function(data) {
         //console.log(data);
         parseData(data, i);
     });
     sock.on("error", function(err) {
-        console.log("ERROR:" + err);
+        console.log("Socket Error:" + err);
     });
     sock.on("close", function(err) {
-        console.log("CLOSED:" + err);
+        console.log("Socket is now closed:" + err);
     });
     sock.connect(srvconfig.port, srvconfig.ip);
 });
@@ -959,7 +907,6 @@ function sendTeams(data, serverI) {
     });
 }
 
-
 function sayToChannel(data) {
     data.shift();
     var name = data[0];
@@ -975,7 +922,7 @@ function requestSub(data, serverI) {
         db.getPlayerByAuth(subsArray[0].account, function(result) {
             send(serverI, "/assignseclev " + result.name + " " + seclevID);
         });
-        bot.say(subsArray[0].nick, "You are now playing for gather in place of " + subbed + ". The server's IP:Port : " + serversConfig.serversArray[serverI].publicIp + ":" + serversConfig.serversArray[serverI].port);
+        bot.say(subsArray[0].nick, "You are now playing for gather in place of " + subbed + ". The server's IP:Port : " + serversArray[serverI].publicIp + ":" + serversArray[serverI].port);
 
         db.getPlayerByAccount(subbed, function(result) {
             var team = "";
@@ -1042,15 +989,15 @@ function getMostVotedServer() {
             }
         }
     };
-    var mostVoted = [serversConfig.serversArray[0].name, 0];
+    var mostVoted = [serversArray[0].name, 0];
     for (name in votes) {
         if (votes[name] > mostVoted[1]) {
             mostVoted[1] = votes[name];
             mostVoted[0] = name;
         }
     }
-    for (var i = 0; i < serversConfig.serversArray.length; i++) {
-        if (serversConfig.serversArray[i].name === mostVoted[0]) {
+    for (var i = 0; i < serversArray.length; i++) {
+        if (serversArray[i].name === mostVoted[0]) {
             return i;
         }
     };
