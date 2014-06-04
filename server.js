@@ -44,8 +44,7 @@ var db = require("./lib/db.js")({
     usersTable: config.mysql.usersTable,
     matchTable: config.mysql.matchTable
 });
-var botControl = require('./lib/bot.js')(db, bot, config);
-console.log(config);
+var botControl = require('./lib/bot.js')(db, bot, config, send);
 var parseMessage = botControl.parseMessage;
 //Error handling - logs/saves and exit process(1)
 bot.addListener("error", function(err) {
@@ -55,15 +54,14 @@ bot.addListener("error", function(err) {
         console.log(err.stack);
     }
 });
-
-process.on("uncaughtException", function(err) {
-    if (saveErrorLogs) {
-        errorLogStream.write("[PROCESS-ERROR]\n" + JSON.stringify(err) + "\n=========== END PROCESS ERROR ===========\n");
-    } else {
-        console.log(err.stack);
-    }
-    process.exit(1);
-});
+// process.on("uncaughtException", function(err) {
+//     if (saveErrorLogs) {
+//         errorLogStream.write("[PROCESS-ERROR]\n" + JSON.stringify(err) + "\n=========== END PROCESS ERROR ===========\n");
+//     } else {
+//         console.log(err.stack);
+//     }
+//     process.exit(1);
+// });
 // IRC Parsing;
 function isAdmin(account) {
     for (var i = 0; i < adminList.length; i++) {
@@ -91,6 +89,18 @@ bot.addListener("part", function(a, b, c, raw) {
         if (subsArray[i].host === raw.host) {
             subsArray.splice(i, 1);
             bot.say(channels, raw.nick + " was removed from the queue(left IRC).");
+        }
+    };
+});
+bot.addListener("nick", function(oldNick, newNick) {
+    for (var i = 0; i < playersArray.length; i++) {
+        if (playersArray[i].nick === oldNick) {
+            playersArray[i].nick = newNick;
+        }
+    };
+    for (var i = 0; i < subsArray.length; i++) {
+        if (subsArray[i].nick === oldNick) {
+            subsArray[i].nick = newNick;
         }
     };
 });
@@ -291,31 +301,6 @@ function send(serverID, text) {
         return true;
     }
     return false;
-}
-
-function getMostVotedServer() {
-    var votes = {};
-    for (var i = 0; i < playersArray.length; i++) {
-        if (playersArray[i].vote) {
-            if (votes[playersArray[i].vote]) {
-                votes[playersArray[i].vote] += 1;
-            } else {
-                votes[playersArray[i].vote] = 1;
-            }
-        }
-    };
-    var mostVoted = [serversArray[0].name, 0];
-    for (name in votes) {
-        if (votes[name] > mostVoted[1]) {
-            mostVoted[1] = votes[name];
-            mostVoted[0] = name;
-        }
-    }
-    for (var i = 0; i < serversArray.length; i++) {
-        if (serversArray[i].name === mostVoted[0]) {
-            return i;
-        }
-    };
 }
 
 function requestKAGLink(data, serverI) {
