@@ -2,6 +2,52 @@ var irc = require("irc");
 var colors = require('irc-colors');
 var mysql = require("mysql");
 var fs = require("fs");
+var winston = require("winston");
+
+var WinstonLevels = {
+    levels: {
+        message: 1,
+        info: 2,
+        ircError: 3,
+        error: 4
+    },
+    colors: {
+        message: 'blue',
+        info: 'green',
+        ircError: 'yellow',
+        error: 'red'
+    }
+};
+var logger = new(winston.Logger)({
+    transports: [
+        new(winston.transports.Console)({
+            colorize: true,
+            level: 'info'
+        }),
+        new(winston.transports.DailyRotateFile)({
+            name: 'plain',
+            filename: './logs/plain/[messages].txt',
+            datePattern: 'dd-MM-yyyy',
+            json: false,
+        }),
+        new(winston.transports.DailyRotateFile)({
+            name: 'json',
+            filename: './logs/json/[messages].txt',
+            datePattern: 'dd-MM-yyyy',
+            json: true,
+        }),
+        new(winston.transports.File)({
+            name: 'error-file',
+            level: 'error',
+            filename: './logs/[error].txt',
+            datePattern: 'dd-MM-yyyy',
+            json: true,
+        }),
+
+    ],
+    levels: WinstonLevels.levels,
+    colors: WinstonLevels.colors
+});
 var Socket = require('net').Socket;
 
 //Load Configs
@@ -43,25 +89,17 @@ var db = require("./lib/db.js")({
     pool: pool,
     usersTable: config.mysql.usersTable,
     matchTable: config.mysql.matchTable
-});
-var botControl = require('./lib/bot.js')(db, bot, config, send);
+}, logger);
+var botControl = require('./lib/bot.js')(db, bot, config, send, logger);
 var parseMessage = botControl.parseMessage;
 //Error handling - logs/saves and exit process(1)
 bot.addListener("error", function(err) {
-    if (saveErrorLogs) {
-        errorLogStream.write("[IRC-ERROR]\n" + JSON.stringify(err) + "\n============= END IRC ERROR =============\n");
-    } else {
-        console.log(err.stack);
-    }
+    logger.ircError(err);
 });
-// process.on("uncaughtException", function(err) {
-//     if (saveErrorLogs) {
-//         errorLogStream.write("[PROCESS-ERROR]\n" + JSON.stringify(err) + "\n=========== END PROCESS ERROR ===========\n");
-//     } else {
-//         console.log(err.stack);
-//     }
-//     process.exit(1);
-// });
+process.on("uncaughtException", function(err) {
+    logger.error(JSON.stringify(err.stack));
+    process.exit(1);
+});
 // IRC Parsing;
 function isAdmin(account) {
     for (var i = 0; i < adminList.length; i++) {
@@ -153,17 +191,16 @@ serversArray.forEach(function(srvconfig, i) {
 
     sock.on("connect", function() {
         this.write(srvconfig.rcon + "\n", "utf8");
-        console.log("Connected to the KAG Server...");
+        logger.info("Connected to the KAG Server...");
     });
     sock.on("data", function(data) {
-        //console.log(data);
         parseData(data, i);
     });
     sock.on("error", function(err) {
-        console.log("Socket Error:" + err);
+        logger.error("Socket " + err);
     });
     sock.on("close", function(err) {
-        console.log("Socket is now closed:" + err);
+        logger.error("Socket is now closed.");
     });
     sock.connect(srvconfig.port, srvconfig.ip);
 });
@@ -172,7 +209,6 @@ function parseData(data, serverI) {
     data = data.split("\n");
     for (var j = 0; j < data.length; j++) {
         data[j] = data[j].substring(11, data[j].length);
-        console.log(data[j]);
 
         if (data[j].indexOf("[Gather] ") === 0) {
             data[j] = data[j].substring(9, data[j].length);
@@ -322,3 +358,6 @@ function roundBlue(data, serverI) {
 function roundRed(data, serverI) {
     bot.say(channels, "Round finished on server " + serverI + ": the red team has won.");
 }
+
+
+logger.info('Starting the bot.');
