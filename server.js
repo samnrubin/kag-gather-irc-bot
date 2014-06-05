@@ -26,12 +26,14 @@ var logger = new(winston.Logger)({
         }),
         new(winston.transports.DailyRotateFile)({
             name: 'plain',
+            level: 'message',
             filename: './logs/plain/[messages].txt',
             datePattern: 'dd-MM-yyyy',
             json: false,
         }),
         new(winston.transports.DailyRotateFile)({
             name: 'json',
+            level: 'message',
             filename: './logs/json/[messages].txt',
             datePattern: 'dd-MM-yyyy',
             json: true,
