@@ -75,7 +75,6 @@ var version = "KAG Gather Bot v1.1.0";
 var saveLogs = config.options.saveLogs;
 var saveErrorLogs = config.options.saveErrorLogs;
 var checkFrequency = config.options.checkFrequency;
-var guideLink = config.options.guideURL ? " To know how to do that and learn the commands, read the guide at " + config.options.guideURL + " ." : "";
 
 //Match config
 var links = require("./lib/links.js")({
