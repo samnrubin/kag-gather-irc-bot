@@ -1,5 +1,5 @@
+/*jshint unused:true*/
 var irc = require("irc");
-var colors = require('irc-colors');
 var mysql = require("mysql");
 var fs = require("fs");
 var winston = require("winston");
@@ -70,17 +70,6 @@ var pool = mysql.createPool({
     database: config.mysql.database
 });
 
-//Other
-var version = "KAG Gather Bot v1.1.0";
-var saveLogs = config.options.saveLogs;
-var saveErrorLogs = config.options.saveErrorLogs;
-var checkFrequency = config.options.checkFrequency;
-
-//Match config
-var links = require("./lib/links.js")({
-    pool: pool,
-    usersTable: config.mysql.usersTable
-});
 var db = require("./lib/db.js")({
     pool: pool,
     usersTable: config.mysql.usersTable,
@@ -88,15 +77,7 @@ var db = require("./lib/db.js")({
 }, logger);
 var botControl = require('./lib/bot.js')(db, bot, config, send, logger);
 var serverCommands = require('./lib/serverCommands.js')(db, bot, config, send, logger, serversArray);
-// IRC;
-function isAdmin(account) {
-    for (var i = 0; i < adminList.length; i++) {
-        if (adminList[i] === account) {
-            return true;
-        }
-    }
-    return false;
-}
+
 //IRC Handling
 bot.addListener("message#", botControl.parseMessage);
 bot.addListener("registered", function() {
@@ -134,7 +115,7 @@ bot.addListener("nick", function(oldNick, newNick) {
 var socketArray = [];
 var serversArray = config.serverList;
 var socketRcon = [];
-serversArray.forEach(function(srvconfig, i) {
+serversArray.forEach(function(srvconfig) {
     var sock = new Socket();
     sock.setEncoding("utf8");
     sock.setNoDelay();
@@ -153,7 +134,7 @@ serversArray.forEach(function(srvconfig, i) {
     sock.on("error", function(err) {
         logger.error("Socket " + err);
     });
-    sock.on("close", function(err) {
+    sock.on("close", function() {
         logger.error("Socket is now closed.");
     });
     sock.connect(srvconfig.port, srvconfig.ip);
