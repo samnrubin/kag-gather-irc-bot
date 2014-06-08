@@ -14,7 +14,7 @@ var connection = mysql.createConnection({
 connection.connect();
 connection.query('CREATE DATABASE ' + config.mysql.database + ';', function(err) {
     if (err) throw err;
-    console.log("Database '" + config.mysql.database + "' created with success. Now creating tables.")
+    console.log("Database '" + config.mysql.database + "' created with success. Now creating tables.");
     connection.changeUser({
         database: config.mysql.database
     }, function(err) {

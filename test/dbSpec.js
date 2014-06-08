@@ -33,8 +33,8 @@ describe("DB-Functions", function() {
         it("should return if a player is banned", function(done) {
             db.isPlayerBanned('__test__DummyBanned', function(isBanned) {
                 db.isPlayerBanned('__test__DummyAuth', function(isBanned1) {
-                    expect(isBanned1).to.be.false;
-                    expect(isBanned).to.be.true;
+                    expect(isBanned1).to.be.equal(false);
+                    expect(isBanned).to.be.equal(true);
                     done();
                 });
             });
@@ -46,7 +46,7 @@ describe("DB-Functions", function() {
                 expect(stats).to.equal("10,5");
                 done();
             });
-        })
+        });
     });
     describe('#getPlayerByAuth', function() {
         it('should return the accounts username', function(done) {
@@ -100,7 +100,7 @@ describe("DB-Functions", function() {
     //removes test-players
     after(function(done) {
         pool.getConnection(function(err, connection) {
-            connection.query("DELETE FROM " + usersTable + " WHERE name LIKE '\_\_test\_\_%';", function(err) {
+            connection.query("DELETE FROM " + usersTable + " WHERE name LIKE '\_\_test\_\_%';", function(err) { // jshint ignore:line
                 if (err) throw err;
                 done();
             });

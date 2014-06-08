@@ -94,7 +94,7 @@ function isAdmin(account) {
         if (adminList[i] === account) {
             return true;
         }
-    };
+    }
     return false;
 }
 //IRC Handling
@@ -110,25 +110,25 @@ bot.addListener("part", function(a, b, c, raw) {
             playersArray.splice(i, 1);
             bot.say(channels, raw.nick + " was removed from the queue(left IRC).");
         }
-    };
-    for (var i = 0; i < subsArray.length; i++) {
-        if (subsArray[i].host === raw.host) {
-            subsArray.splice(i, 1);
+    }
+    for (var j = 0; j < subsArray.length; j++) {
+        if (subsArray[j].host === raw.host) {
+            subsArray.splice(j, 1);
             bot.say(channels, raw.nick + " was removed from the queue(left IRC).");
         }
-    };
+    }
 });
 bot.addListener("nick", function(oldNick, newNick) {
     for (var i = 0; i < playersArray.length; i++) {
         if (playersArray[i].nick === oldNick) {
             playersArray[i].nick = newNick;
         }
-    };
-    for (var i = 0; i < subsArray.length; i++) {
-        if (subsArray[i].nick === oldNick) {
-            subsArray[i].nick = newNick;
+    }
+    for (var j = 0; j < subsArray.length; j++) {
+        if (subsArray[j].nick === oldNick) {
+            subsArray[j].nick = newNick;
         }
-    };
+    }
 });
 //Servers
 var socketArray = [];

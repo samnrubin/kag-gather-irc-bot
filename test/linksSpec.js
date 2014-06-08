@@ -19,7 +19,7 @@ var links = require("../lib/links.js")({
 describe('Links Control', function() {
     describe('#addIRCRequest', function() {
         it('should add a irc request to the object', function() {
-            var result = links.addIRCRequest('DummyAuth', 'DummyUser')
+            var result = links.addIRCRequest('DummyAuth', 'DummyUser');
             expect(result).to.not.equal('already-requested');
         });
     });
@@ -34,8 +34,8 @@ describe('Links Control', function() {
             links.addKAGRequest('DummyAuthRequest', 'DummyNameRequest');
             var goodRequest = links.validateIRCRequest('DummyAuthRequest', 'DummyNameRequest');
             var badRequest = links.validateIRCRequest('RandonAuth', 'RandonName');
-            expect(goodRequest).to.be.true;
-            expect(badRequest).to.be.false;
+            expect(goodRequest).to.be.equal(true);
+            expect(badRequest).to.be.equal(false);
         });
     });
     describe('#validateKAGRequest', function() {
@@ -43,14 +43,14 @@ describe('Links Control', function() {
             links.addIRCRequest('DummyAuthRequestKAG', 'DummyNameRequestKAG');
             var goodRequest = links.validateKAGRequest('DummyAuthRequestKAG', 'DummyNameRequestKAG');
             var badRequest = links.validateKAGRequest('RandonAuthKAG', 'RandonNameKAG');
-            expect(goodRequest).to.be.true;
-            expect(badRequest).to.be.false;
+            expect(goodRequest).to.be.equal(true);
+            expect(badRequest).to.be.equal(false);
         });
     });
     describe('#requestLink', function() {
         it('should make a kag link request', function(done) {
             links.requestLink('requestLinkDummyAuth', 'requestLinkDummyUserName', function(result) {
-                expect(result.inserted).to.be.false;
+                expect(result.inserted).to.be.equal(false);
                 expect(result.message).to.equal('Now go to the IRC channel and type !link <kagusername> <authname>');
                 done();
             });
