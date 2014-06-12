@@ -1,5 +1,6 @@
 //Load Configs
 var fs = require('fs');
+var winston = require('winston');
 var config = JSON.parse(fs.readFileSync("config.json", {
     encoding: "utf8"
 }));
@@ -13,11 +14,35 @@ var pool = mysql.createPool({
 });
 var usersTable = config.mysql.usersTable;
 var expect = require("chai").expect;
+var WinstonLevels = {
+    levels: {
+        message: 1,
+        info: 2,
+        ircError: 3,
+        error: 4
+    },
+    colors: {
+        message: 'blue',
+        info: 'green',
+        ircError: 'yellow',
+        error: 'red'
+    }
+};
+
+var logger = new(winston.Logger)({
+    transports: [
+        new(winston.transports.Console)({
+            silent: true
+        })
+    ],
+    levels: WinstonLevels.levels,
+    colors: WinstonLevels.colors
+});
 var db = require("../lib/db.js")({
     pool: pool,
     usersTable: config.mysql.usersTable,
     matchTable: config.mysql.matchTable
-});
+}, logger);
 
 describe("DB-Functions", function() {
     //adds test-players
