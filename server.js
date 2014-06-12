@@ -154,7 +154,10 @@ bot.addListener("error", function(err) {
 });
 process.on("uncaughtException", function(err) {
     logger.error(JSON.stringify(err.stack));
-    process.exit(1);
+
+    setTimeout(function() {
+        process.exit(1);
+    }, 50); // so it exits after it has been logged
 });
 
 logger.info('Starting the bot.');
