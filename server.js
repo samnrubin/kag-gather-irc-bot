@@ -69,7 +69,7 @@ var pool = mysql.createPool({
     password: config.mysql.password,
     database: config.mysql.database
 });
-
+config.pool = pool;
 var db = require("./lib/db.js")({
     pool: pool,
     usersTable: config.mysql.usersTable,
