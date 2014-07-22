@@ -76,7 +76,7 @@ var db = require("./lib/db.js")({
     matchTable: config.mysql.matchTable
 }, logger);
 var botControl = require('./lib/bot.js')(db, bot, config, send, logger);
-var serverCommands = require('./lib/serverCommands.js')(db, bot, config, send, logger, serversArray);
+var serverCommands = require('./lib/serverCommands.js')(db, bot, config, send, logger, serversArray, channels);
 
 //IRC Handling
 bot.addListener("message#", botControl.parseMessage);
