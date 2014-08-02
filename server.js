@@ -85,37 +85,13 @@ bot.addListener("registered", function() {
         bot.send("AUTH", botAccount, botPassword);
     }
 });
-bot.addListener("part", function(a, b, c, raw) {
-    for (var i = 0; i < playersArray.length; i++) {
-        if (playersArray[i].host === raw.host) {
-            playersArray.splice(i, 1);
-            bot.say(channels, raw.nick + " was removed from the queue(left IRC).");
-        }
-    }
-    for (var j = 0; j < subsArray.length; j++) {
-        if (subsArray[j].host === raw.host) {
-            subsArray.splice(j, 1);
-            bot.say(channels, raw.nick + " was removed from the queue(left IRC).");
-        }
-    }
-});
-bot.addListener("nick", function(oldNick, newNick) {
-    for (var i = 0; i < playersArray.length; i++) {
-        if (playersArray[i].nick === oldNick) {
-            playersArray[i].nick = newNick;
-        }
-    }
-    for (var j = 0; j < subsArray.length; j++) {
-        if (subsArray[j].nick === oldNick) {
-            subsArray[j].nick = newNick;
-        }
-    }
-});
+bot.addListener("part", botControl.onPart);
+bot.addListener("nick", botControl.onNick);
 //Servers
 var socketArray = [];
 var serversArray = config.serverList;
 var socketRcon = [];
-serversArray.forEach(function(srvconfig) {
+serversArray.forEach(function(srvconfig, serverID) {
     var sock = new Socket();
     sock.setEncoding("utf8");
     sock.setNoDelay();
@@ -129,7 +105,7 @@ serversArray.forEach(function(srvconfig) {
         logger.info("Connected to the KAG Server...");
     });
     sock.on("data", function(data) {
-        serverCommands.parseData(data);
+        serverCommands.parseData(data, serverID);
     });
     sock.on("error", function(err) {
         logger.error("Socket " + err);
