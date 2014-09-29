@@ -76,7 +76,7 @@ var db = require("./lib/db.js")({
     matchTable: config.mysql.matchTable
 }, logger);
 
-var links = require('./links.js')(config);`
+var links = require('./links.js')(config);
 
 var botControl = require('./lib/bot.js')(db, bot, config, links, send, logger);
 var serverCommands = require('./lib/serverCommands.js')(db, bot, config, links, send, logger, serversArray, channels);
