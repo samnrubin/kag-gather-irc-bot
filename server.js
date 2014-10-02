@@ -79,7 +79,7 @@ var db = require("./lib/db.js")({
 var links = require('./lib/links.js')(config);
 
 var serverCommands = require('./lib/serverCommands.js')(db, bot, config, links, send, logger, serversArray, channels);
-var botControl = require('./lib/bot.js')(db, bot, config, links, send, logger, serverCommands);
+var botControl = require('./lib/bot.js')(db, bot, config, links, send, logger);
 
 //IRC Handling
 bot.addListener("message#", botControl.parseMessage);
