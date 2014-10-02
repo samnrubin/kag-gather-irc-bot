@@ -77,13 +77,9 @@ var db = require("./lib/db.js")({
 }, logger);
 
 var links = require('./lib/links.js')(config);
-var playingArray = {
-    blueTeam: [],
-    redTeam: []
-};
 
-var botControl = require('./lib/bot.js')(db, bot, config, links, send, logger, playingArray);
-var serverCommands = require('./lib/serverCommands.js')(db, bot, config, links, send, logger, serversArray, channels, playingArray);
+var serverCommands = require('./lib/serverCommands.js')(db, bot, config, links, send, logger, serversArray, channels);
+var botControl = require('./lib/bot.js')(db, bot, config, links, send, logger, serverCommands);
 
 //IRC Handling
 bot.addListener("message#", botControl.parseMessage);
