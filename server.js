@@ -80,7 +80,7 @@ var links = require('./lib/links.js')(config);
 var playerManagement = require('./lib/playerManagement.js');
 
 var serverCommands = require('./lib/serverCommands.js')(db, bot, config, links, playerManagement, send, logger, serversArray, channels);
-var botControl = require('./lib/bot.js')(db, bot, config, links, playerManagement, send, logger);
+var botControl = require('./lib/bot.js')(db, bot, config, links, playerManagement, send, logger, channels);
 
 //IRC Handling
 bot.addListener("message#", botControl.parseMessage);
