@@ -90,6 +90,9 @@ bot.addListener("registered", function() {
     }
 });
 bot.addListener("part", botControl.onPart);
+bot.addListener("quit", botControl.onPart);
+bot.addListener("kick", botControl.onPart);
+bot.addListener("kill", botControl.onPart);
 bot.addListener("nick", botControl.onNick);
 //Servers
 var socketArray = [];
