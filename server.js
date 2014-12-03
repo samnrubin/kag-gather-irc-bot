@@ -98,6 +98,7 @@ bot.addListener("nick", botControl.onNick);
 var socketArray = [];
 var serversArray = config.serverList;
 var socketRcon = [];
+var connectedArray = [];
 serversArray.forEach(function(srvconfig, serverID) {
     var sock = new Socket();
     sock.setEncoding("utf8");
@@ -110,21 +111,29 @@ serversArray.forEach(function(srvconfig, serverID) {
     sock.on("connect", function() {
         this.write(srvconfig.rcon + "\n", "utf8");
         logger.info("Connected to the KAG Server...");
+	connectedArray[serverID]=true;
     });
     sock.on("data", function(data) {
         serverCommands.parseData(data, serverID);
     });
     sock.on("error", function(err) {
         logger.error("Socket " + err);
+	//connectedArray[serverID]=false;
     });
     sock.on("close", function() {
         logger.error("Socket is now closed.");
+	connectedArray[serverID]=false;
     });
     sock.connect(srvconfig.port, srvconfig.ip);
 });
 
 function send(serverID, text) {
+logger.info("connected: "+connectedArray[serverID]);
     if (socketArray[serverID]) {
+        if(!connectedArray[serverID]) {
+            bot.say(channels, "attempting to reconnect bot to server "+serverID);
+            socketArray[serverID].connect(serversArray[serverID].port, serversArray[serverID].ip);
+        }
         socketArray[serverID].write(text + "\n");
         return true;
     }
