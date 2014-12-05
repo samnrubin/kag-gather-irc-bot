@@ -70,14 +70,14 @@ var pool = mysql.createPool({
     database: config.mysql.database
 });
 config.pool = pool;
+var playerManagement = require('./lib/playerManagement.js');
 var db = require("./lib/db.js")({
     pool: pool,
     usersTable: config.mysql.usersTable,
     matchTable: config.mysql.matchTable
-}, logger);
+}, logger, playerManagement);
 
 var links = require('./lib/links.js')(config);
-var playerManagement = require('./lib/playerManagement.js');
 
 var serverCommands = require('./lib/serverCommands.js')(db, bot, config, links, playerManagement, send, logger, serversArray, channels);
 var botControl = require('./lib/bot.js')(db, bot, config, links, playerManagement, send, logger, channels);
