@@ -25,6 +25,14 @@
         "rcon": "",
         "votes": 0
     }],
+    "pubServerList": [{
+        "name": "",
+        "ip": "",
+        "publicIp": "",
+        "port": "",
+        "rcon": "",
+        "votes": 0
+    }],
     "options": {
         "adminList": [],
         "playersNeeded": 2,
