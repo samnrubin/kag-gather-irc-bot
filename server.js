@@ -110,35 +110,27 @@ serversArray.forEach(function(srvconfig, serverID) {
 
     sock.on("connect", function() {
         this.write(socketRcon[serverID] + "\n", "utf8");
-        logger.info("sending: "+socketRcon[serverID]+" to server: "+serverID);
-        logger.info("srvconfig.rcon: "+srvconfig.rcon);
-        logger.info("Connected to the KAG Server ID: "+serverID);
+        logger.info("Connected to the KAG Gather Server ID: "+serverID);
 	connectedArray[serverID]=true;
     });
     sock.on("data", function(data) {
         serverCommands.parseData(data, serverID);
     });
     sock.on("error", function(err) {
-        logger.error("Socket " + err);
-        logger.info('Couldnt connect to KAG server: '+serverID+', trying again in 5 minutes');
+        logger.error("Gather " +serverID+ " Socket " + err);
+        logger.info('Couldnt connect to KAG Gather server: '+serverID+', trying again in 5 minutes');
 
         sock.setTimeout(300000, function() {            //300000ms=5mins
-            sock.connect(srvconfig.port, srvconfig.ip, function(){
-                //logger.info("Connected to the KAG Server...");        //'connect' event should say this?
-                //connectedArray[serverID]=true;
-            });
+            sock.connect(srvconfig.port, srvconfig.ip);
         });
     });
     sock.on("close", function() {
-        logger.error("Socket is now closed on server: "+serverID);
+        logger.error("Socket is now closed on Gather server: "+serverID);
         connectedArray[serverID]=false;
 
-        logger.info("Attempting to reconnect to server: "+serverID+"  in 5 minutes");
+        logger.info("Attempting to reconnect to Gather server: "+serverID+"  in 5 minutes");
         sock.setTimeout(300000, function() {            //300000ms=5mins
-            sock.connect(srvconfig.port, srvconfig.ip, function(){
-                //logger.info("Connected to the KAG Server...");        //'connect' event should say this?
-                //connectedArray[serverID]=true;
-            });
+            sock.connect(srvconfig.port, srvconfig.ip);
         });
     });
     sock.connect(srvconfig.port, srvconfig.ip);
@@ -175,34 +167,28 @@ if(pubServersArray){
 
         sock.on("connect", function() {
             this.write(pubSocketRcon[serverID] + "\n", "utf8");
-            logger.info("sending: "+pubSocketRcon[serverID]);
-            logger.info("Connected to the KAG Server...");
+
+            logger.info("Connected to KAG Public Server: "+serverID);
             pubConnectedArray[serverID]=true;
         });
         sock.on("data", function(data) {
             pubServer.parseData(data, serverID);
         });
         sock.on("error", function(err) {
-            logger.error("Socket " + err);
-            logger.info('Couldnt connect to KAG server: '+serverID+', trying again in 5 minutes');
+            logger.error("Public "+serverID+" Socket " + err);
+            logger.info('Couldnt connect to KAG Public server: '+serverID+', trying again in 5 minutes');
 
             sock.setTimeout(300000, function() {            //300000ms=5mins
-                sock.connect(srvconfig.port, srvconfig.ip, function(){
-                    //logger.info("Connected to the KAG Server...");        //'connect' event should say this?
-                    //pubConnectedArray[serverID]=true;
-                });
+                sock.connect(srvconfig.port, srvconfig.ip);
             });
         });
         sock.on("close", function() {
-            logger.error("Socket is now closed.");
+            logger.error("Socket is now closed on Public server: "+serverID);
             pubConnectedArray[serverID]=false;
 
-            logger.info("Attempting to reconnect in 5 minutes");
+            logger.info("Attempting to reconnect to Public server "+serverID+" in 5 minutes");
             sock.setTimeout(300000, function() {            //300000ms=5mins
-                sock.connect(srvconfig.port, srvconfig.ip, function(){
-                    //logger.info("Connected to the KAG Server...");        //'connect' event should say this?
-                    //pubConnectedArray[serverID]=true;
-                });
+                sock.connect(srvconfig.port, srvconfig.ip);
             });
 
         });
