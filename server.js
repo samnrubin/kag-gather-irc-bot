@@ -80,7 +80,7 @@ var db = require("./lib/db.js")({
 var links = require('./lib/links.js')(config);
 
 var serverCommands = require('./lib/serverCommands.js')(db, bot, config, links, playerManagement, send, logger, serversArray, channels);
-var botControl = require('./lib/bot.js')(db, bot, config, links, playerManagement, send, logger, channels);
+var botControl = require('./lib/bot.js')(db, bot, config, links, playerManagement, connectedArray, send, logger, channels);
 
 //IRC Handling
 bot.addListener("message#", botControl.parseMessage);
@@ -111,6 +111,7 @@ serversArray.forEach(function(srvconfig, serverID) {
     sock.on("connect", function() {
         this.write(socketRcon[serverID] + "\n", "utf8");
         logger.info("Connected to the KAG Gather Server ID: "+serverID);
+        bot.say(channels, "Connection established to gather server "+serverID+"("+serversArray[serverID].name+")"
 	connectedArray[serverID]=true;
     });
     sock.on("data", function(data) {
@@ -118,11 +119,11 @@ serversArray.forEach(function(srvconfig, serverID) {
     });
     sock.on("error", function(err) {
         logger.error("Gather " +serverID+ " Socket " + err);
-        logger.info('Couldnt connect to KAG Gather server: '+serverID+', trying again in 5 minutes');
+        /*logger.info('Couldnt connect to KAG Gather server: '+serverID+', trying again in 5 minutes');
 
         sock.setTimeout(300000, function() {            //300000ms=5mins
             sock.connect(srvconfig.port, srvconfig.ip);
-        });
+        });*/
     });
     sock.on("close", function() {
         logger.error("Socket is now closed on Gather server: "+serverID);
@@ -176,11 +177,11 @@ if(pubServersArray){
         });
         sock.on("error", function(err) {
             logger.error("Public "+serverID+" Socket " + err);
-            logger.info('Couldnt connect to KAG Public server: '+serverID+', trying again in 5 minutes');
+            /*logger.info('Couldnt connect to KAG Public server: '+serverID+', trying again in 5 minutes');
 
             sock.setTimeout(300000, function() {            //300000ms=5mins
                 sock.connect(srvconfig.port, srvconfig.ip);
-            });
+            });*/
         });
         sock.on("close", function() {
             logger.error("Socket is now closed on Public server: "+serverID);
