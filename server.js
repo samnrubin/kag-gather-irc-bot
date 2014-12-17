@@ -80,7 +80,7 @@ var db = require("./lib/db.js")({
 var links = require('./lib/links.js')(config);
 
 var serverCommands = require('./lib/serverCommands.js')(db, bot, config, links, playerManagement, send, logger, serversArray, channels);
-var botControl = require('./lib/bot.js')(db, bot, config, links, playerManagement, connectedArray, send, logger, channels);
+var botControl = require('./lib/bot.js')(db, bot, config, links, playerManagement, send, logger, channels);
 
 //IRC Handling
 bot.addListener("message#", botControl.parseMessage);
@@ -98,7 +98,7 @@ bot.addListener("nick", botControl.onNick);
 var socketArray = [];
 var serversArray = config.serverList;
 var socketRcon = [];
-var connectedArray = [];
+//var connectedArray = [];
 serversArray.forEach(function(srvconfig, serverID) {
     var sock = new Socket();
     sock.setEncoding("utf8");
@@ -108,11 +108,13 @@ serversArray.forEach(function(srvconfig, serverID) {
     socketArray.push(sock);
     socketRcon.push(srvconfig.rcon);
 
+    playerManagement.connectedArray.push(false);
+
     sock.on("connect", function() {
         this.write(socketRcon[serverID] + "\n", "utf8");
         logger.info("Connected to the KAG Gather Server ID: "+serverID);
-        bot.say(channels, "Connection established to gather server "+serverID+"("+serversArray[serverID].name+")"
-	connectedArray[serverID]=true;
+        bot.say(channels, "Connection established to gather server "+serverID+"("+serversArray[serverID].name+")");
+	playerManagement.connectedArray[serverID]=true;
     });
     sock.on("data", function(data) {
         serverCommands.parseData(data, serverID);
@@ -127,7 +129,7 @@ serversArray.forEach(function(srvconfig, serverID) {
     });
     sock.on("close", function() {
         logger.error("Socket is now closed on Gather server: "+serverID);
-        connectedArray[serverID]=false;
+        playerManagement.connectedArray[serverID]=false;
 
         logger.info("Attempting to reconnect to Gather server: "+serverID+"  in 5 minutes");
         sock.setTimeout(300000, function() {            //300000ms=5mins
@@ -138,7 +140,7 @@ serversArray.forEach(function(srvconfig, serverID) {
 });
 
 function send(serverID, text) {
-logger.info("connected: "+connectedArray[serverID]);
+logger.info("connected: "+playerManagement.connectedArray[serverID]);
     if (socketArray[serverID]) {
         /*if(!connectedArray[serverID]) {
             bot.say(channels, "attempting to reconnect bot to server "+serverID);
