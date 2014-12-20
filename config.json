@@ -22,6 +22,7 @@
         "ip": "",
         "publicIp": "",
         "port": "",
+        "password": "",
         "rcon": "",
         "votes": 0
     }],
@@ -30,6 +31,7 @@
         "ip": "",
         "publicIp": "",
         "port": "",
+        "password": "",
         "rcon": "",
         "votes": 0
     }],
