@@ -58,7 +58,7 @@ var config = JSON.parse(fs.readFileSync("config.json", {
 }));
 //IRC Config
 var channels = config.bot.channels;
-var bot = new irc.Client('irc.quakenet.org', 'gatherBot', config.bot);
+var bot = new irc.Client('irc.quakenet.org', config.userName, config.bot);
 var botAccount = config.bot.authname;
 var botPassword = config.bot.password;
 var logIn = (botAccount && botPassword);
@@ -130,6 +130,7 @@ serversArray.forEach(function(srvconfig, serverID) {
     sock.on("close", function() {
         logger.error("Socket is now closed on Gather server: "+serverID);
         playerManagement.connectedArray[serverID]=false;
+        bot.say(channels, "Connection with gather server "+serverID+" ("+serversArray[serverID].name+") lost");
 
         logger.info("Attempting to reconnect to Gather server: "+serverID+"  in 5 minutes");
         sock.setTimeout(300000, function() {            //300000ms=5mins
