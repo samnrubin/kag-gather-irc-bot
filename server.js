@@ -58,7 +58,7 @@ var config = JSON.parse(fs.readFileSync("config.json", {
 }));
 //IRC Config
 var channels = config.bot.channels;
-var bot = new irc.Client('irc.quakenet.org', config.userName, config.bot);
+var bot = new irc.Client('irc.quakenet.org', config.bot.userName, config.bot);
 var botAccount = config.bot.authname;
 var botPassword = config.bot.password;
 var logIn = (botAccount && botPassword);
