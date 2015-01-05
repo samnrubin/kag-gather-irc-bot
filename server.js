@@ -154,7 +154,7 @@ logger.info("connected: "+playerManagement.connectedArray[serverID]);
     return false;
 }
 
-
+/*
 // pubServers
 var pubSocketArray = [];
 var pubServersArray = config.pubServerList;
@@ -181,11 +181,6 @@ if(pubServersArray){
         });
         sock.on("error", function(err) {
             logger.error("Public "+serverID+" Socket " + err);
-            /*logger.info('Couldnt connect to KAG Public server: '+serverID+', trying again in 5 minutes');
-
-            sock.setTimeout(300000, function() {            //300000ms=5mins
-                sock.connect(srvconfig.port, srvconfig.ip);
-            });*/
         });
         sock.on("close", function() {
             logger.error("Socket is now closed on Public server: "+serverID);
@@ -200,7 +195,7 @@ if(pubServersArray){
         sock.connect(srvconfig.port, srvconfig.ip);
     });
 }
-
+*/
 function sendPub(serverID, text) {
 logger.info("connected: "+pubConnectedArray[serverID]);
 if(!pubSocketArray) return false;
