@@ -22,7 +22,8 @@ var logger = new(winston.Logger)({
     transports: [
         new(winston.transports.Console)({
             colorize: true,
-            level: 'info'
+            level: 'info',
+            timestamp:true
         }),
         new(winston.transports.DailyRotateFile)({
             name: 'plain',
