@@ -130,8 +130,10 @@ serversArray.forEach(function(srvconfig, serverID) {
     });
     sock.on("close", function() {
         logger.error("Socket is now closed on Gather server: "+serverID);
+        if(playerManagement.connectedArray[serverID]){
+            bot.say(channels, "Connection with gather server "+serverID+" ("+serversArray[serverID].name+") lost");
+        }
         playerManagement.connectedArray[serverID]=false;
-        bot.say(channels, "Connection with gather server "+serverID+" ("+serversArray[serverID].name+") lost");
 
         logger.info("Attempting to reconnect to Gather server: "+serverID+"  in 5 minutes");
         sock.setTimeout(300000, function() {            //300000ms=5mins
