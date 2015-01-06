@@ -52,6 +52,7 @@ describe("DB-Functions", function() {
                 if (err) throw err;
                 done();
             });
+            connection.release();
         });
     });
     describe('#isPlayerBanned()', function() {
@@ -129,6 +130,7 @@ describe("DB-Functions", function() {
                 if (err) throw err;
                 done();
             });
+            connection.release();
         });
     });
 });
