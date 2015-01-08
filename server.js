@@ -113,8 +113,9 @@ serversArray.forEach(function(srvconfig, serverID) {
 
     sock.on("connect", function() {
         this.write(socketRcon[serverID] + "\n", "utf8");
+        this.write("/ \n");
         logger.info("Connected to the KAG Gather Server ID: "+serverID);
-        bot.say(channels, "Connection established to gather server "+serverID+"("+serversArray[serverID].name+")");
+        bot.say(channels, "Connection established to gather server "+serverID+" ("+serversArray[serverID].name+")");
 	playerManagement.connectedArray[serverID]=true;
     });
     sock.on("data", function(data) {
